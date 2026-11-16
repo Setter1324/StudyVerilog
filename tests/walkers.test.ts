@@ -1,4 +1,3 @@
-import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { BEAT_SECONDS } from '../src/world/beat';
 import { project, tripPose } from '../src/world/walkers';
@@ -47,10 +46,12 @@ describe('한 박자 걷기 (걷기 박자 계획 4장)', () => {
   });
 
   it('스테이지 장면의 길 길이 규칙(2~6칸, 가장 긴 길이 가장 짧은 길의 2.5배 이하)은 경고로 알린다', () => {
-    const dir = new URL('../content/verilog/stages/', import.meta.url);
+    const stages = import.meta.glob<{ id: string; scene?: { roads: { cells: unknown[] }[] } }>('../content/verilog/stages/*.json', {
+      eager: true,
+      import: 'default',
+    });
     const warnings: string[] = [];
-    for (const f of readdirSync(dir).filter((n) => n.endsWith('.json'))) {
-      const stage = JSON.parse(readFileSync(new URL(f, dir), 'utf8')) as { id: string; scene?: { roads: { signal: string; cells: unknown[] }[] } };
+    for (const stage of Object.values(stages)) {
       const lens = (stage.scene?.roads ?? []).map((r) => r.cells.length);
       if (!lens.length) continue;
       const lo = Math.min(...lens);

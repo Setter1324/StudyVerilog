@@ -14,3 +14,25 @@ export const FADE = 0.08;
 
 /** 박자 위치(실수) → 위상(0 이상 1 미만) */
 export const phaseOf = (beat: number) => beat - Math.floor(beat);
+
+/**
+ * 재생 시계의 기준점: 재생을 시작한 순간(속도를 바꾸거나 건너뛴 순간도)의 틱과 시각(ms), 속도.
+ * 틱마다 타이머를 다시 걸지 않고 이 기준점에서 계산하므로, 늦어진 시간이 다음 틱으로 쌓이지 않는다. (걷기 박자 계획 5.1)
+ */
+export interface PlayBase {
+  tick: number;
+  at: number;
+  speed: number;
+}
+
+/** 기준점에서 시각 now(ms)의 틱(실수) */
+export const tickAt = (base: PlayBase, now: number) => base.tick + ((now - base.at) * base.speed) / TICK_MS;
+
+/**
+ * 틱(실수) → 박자 위치. 0.5를 더해 값이 바뀌는 틱(박자의 배수)에 알파카가 길 가운데에 있게 한다.
+ * 값이 바뀌는 순간이 가장 잘 보이고, 멈췄을 때 서는 자리(위상 0.5)와 같아서 시작과 끝이 매끄럽다. (5.2)
+ */
+export const beatAt = (tick: number, beatTicks: number = BEAT_TICKS) => tick / beatTicks + 0.5;
+
+/** 서는 자세와 걷는 자세 사이를 잇는 시간(ms). tokens.css의 --dur-ui와 같다 */
+export const BLEND_MS = 180;

@@ -107,7 +107,7 @@
   /* 움직임 (7.8) */
   --dur-ui: 180ms;
   --ease-ui: ease-out;
-  --dur-tick: 600ms;
+  --dur-tick: 240ms;
 
   --font-sans: Pretendard, 'Pretendard Variable', 'Noto Sans KR', Inter, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', D2Coding, ui-monospace, monospace;
