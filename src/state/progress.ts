@@ -21,6 +21,9 @@ interface ProgressState {
   /** 통과한 스테이지 id */
   done: Record<string, true>;
   sound: boolean;
+  /** 스테이지별 작성 중인 빈칸 값 (6.3 자동 저장) */
+  drafts: Record<string, Record<string, string>>;
+  setDraft: (stage: string, values: Record<string, string>) => void;
   open: (id: string) => void;
   pass: (id: string) => void;
   setSound: (on: boolean) => void;
@@ -33,10 +36,12 @@ export const useProgress = create<ProgressState>()(
       last: null,
       done: {},
       sound: false,
+      drafts: {},
+      setDraft: (stage, values) => set((s) => ({ drafts: { ...s.drafts, [stage]: values } })),
       open: (id) => set({ last: id }),
       pass: (id) => set((s) => ({ done: { ...s.done, [id]: true } })),
       setSound: (on) => set({ sound: on }),
-      reset: () => set({ last: null, done: {} }),
+      reset: () => set({ last: null, done: {}, drafts: {} }),
     }),
     {
       name: 'kwss-progress',

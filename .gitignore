@@ -11,3 +11,6 @@ lecture/
 # 엔진 파일과 골든 테스트 결과 (CI에서 만든다)
 engine/.cache/
 engine/.out/
+
+# 엔진 wasm은 빌드 때 받는다 (engine/fetch-verisim.mjs)
+public/engine/

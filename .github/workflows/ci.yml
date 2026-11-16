@@ -18,6 +18,8 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test
+      - name: 엔진 wasm 받기 (고정 커밋, 해시 확인)
+        run: node engine/fetch-verisim.mjs public/engine
       - run: npm run build
 
   # 엔진 골든 테스트: 네이티브 Icarus Verilog와 브라우저 엔진(wasm)의 결과를 비교한다. (최종계획서 13.1)

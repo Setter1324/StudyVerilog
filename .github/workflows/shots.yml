@@ -1,0 +1,54 @@
+name: shots
+
+# 화면 스크린샷: 빌드해서 미리보기 서버로 띄우고 헤드리스 Chrome으로 찍는다.
+# 세션에서 github.io와 아티팩트를 볼 수 없어서, 결과를 로그에 base64로도 남긴다.
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  shots:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: node engine/fetch-verisim.mjs public/engine
+      - run: npm run build
+      - name: 미리보기 서버
+        run: |
+          npx vite preview --port 4173 --strictPort &
+          for i in $(seq 1 30); do curl -sf http://localhost:4173/StudyVerilog/ > /dev/null && break; sleep 1; done
+      - name: 스크린샷
+        run: |
+          mkdir -p shots
+          shot() {
+            google-chrome --headless=new --no-sandbox --disable-gpu --hide-scrollbars \
+              --window-size="$2" --virtual-time-budget=6000 --screenshot="shots/$1.png" "http://localhost:4173/StudyVerilog/$3"
+          }
+          shot home-1366 1366,1500 ''
+          shot home-390 390,2400 ''
+          shot ui-1366 1366,1700 '#/ui'
+          shot play-1366 1366,1000 '#/play/v1-01'
+          shot play-390 390,1800 '#/play/v1-01'
+      - name: 1-1 풀어 보기 (Playwright, 임시)
+        run: |
+          mkdir -p /tmp/pw && cd /tmp/pw && npm init -y > /dev/null && npm i --silent playwright@1 && npx playwright install --with-deps chromium > /dev/null
+          cd "$GITHUB_WORKSPACE" && PW_PATH=/tmp/pw/node_modules/playwright node tests/e2e/play-1-1.cjs
+      - name: 스크린샷을 로그에 남기기
+        if: always()
+        run: |
+          ls -l shots
+          for f in shots/*.png; do
+            echo "<<<SHOT $(basename "${f%.png}")>>>"
+            base64 -w 0 "$f"
+            echo
+            echo "<<<END>>>"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shots
+          path: shots

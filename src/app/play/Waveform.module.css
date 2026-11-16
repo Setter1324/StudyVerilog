@@ -1,0 +1,97 @@
+.svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: none;
+  cursor: col-resize;
+  user-select: none;
+}
+
+.empty {
+  padding: 20px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.row .label,
+.rowOn .label {
+  fill: var(--text);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.rowOn .label {
+  fill: var(--accent-text);
+}
+
+.one {
+  stroke: var(--text);
+  stroke-width: 2;
+}
+
+.zero {
+  stroke: var(--muted);
+  stroke-width: 2;
+}
+
+.edge {
+  stroke: var(--muted);
+  stroke-width: 1.5;
+}
+
+.rowOn .one,
+.rowOn .zero,
+.rowOn .edge {
+  stroke: var(--accent);
+}
+
+.x {
+  fill: var(--val-x);
+  fill-opacity: 0.4;
+}
+
+.xText {
+  fill: var(--text);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+.z {
+  stroke: var(--val-z);
+  stroke-width: 2;
+  stroke-dasharray: 4 4;
+}
+
+.bus {
+  fill: var(--surface);
+  stroke: var(--text);
+  stroke-width: 1.5;
+}
+
+.busText {
+  fill: var(--text);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-anchor: middle;
+}
+
+.now {
+  fill: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.cursor {
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+
+.cursorText {
+  fill: var(--accent-text);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+}

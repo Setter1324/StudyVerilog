@@ -224,8 +224,13 @@
 
 .valueCard {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 14px;
+}
+
+.valueCard > div {
+  flex: 1 1 110px;
 }
 
 .sprite {
@@ -249,7 +254,7 @@
 
 .zones {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
   gap: var(--space-gap);
   margin: 0;
   padding: 0;
