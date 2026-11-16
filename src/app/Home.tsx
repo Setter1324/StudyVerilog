@@ -136,7 +136,7 @@ function IslandMap() {
         className={s.islandSvg}
         title="여섯 구역이 한 길로 이어진 블록 섬. 알파카가 값을 싣고 길을 걷는다."
       >
-        <Walkers paths={ISLAND_WALK} />
+        <Walkers paths={ISLAND_WALK} pace="cell" />
       </IsoSvg>
       {pins.map((p) => {
         const zone = zoneById(p.zone)!;
