@@ -189,13 +189,13 @@ function alpaca(S: Scene, x: number, y: number, z: number, { dir = 0, val = '0' 
   S.local(x - 0.5, y - 0.5, z, alpacaBoxes(val), dir);
 }
 
-function fogPrims(S: Scene, x: number, y: number, z: number): Prim[] {
+export function fogPrims(S: Scene, x: number, y: number, z: number): Prim[] {
   const f = (x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, op: number) =>
     S.boxPrims({ x0: x - 0.5 + x0, y0: y - 0.5 + y0, z0: z + z0, x1: x - 0.5 + x1, y1: y - 0.5 + y1, z1: z + z1, color: C.fog, opacity: op, sw: 0 });
   return [...f(0.02, 0.1, 0.02, 0.98, 0.9, 0.62, 0.42), ...f(0.2, 0.22, 0.62, 0.86, 0.8, 1.0, 0.42), ...f(0.05, 0.62, 0.0, 0.5, 1.02, 0.36, 0.5)];
 }
 
-function questionMark(S: Scene, x: number, y: number, z: number, size: number): Prim {
+export function questionMark(S: Scene, x: number, y: number, z: number, size: number): Prim {
   const [sx, sy] = S.P(x, y, z);
   return { kind: 'text', x: f1(sx), y: f1(sy), text: '?', size, fill: C.zoneMark, stroke: C.white, sw: size / 6 };
 }
@@ -242,6 +242,8 @@ interface Tile {
 
 export interface IslandMap extends Rendered {
   pins: ZonePinSpot[];
+  /** 알파카가 걷는 길: 칸 좌표를 걷는 순서대로 (5.5) */
+  walk: [number, number][];
   /** "지금 위치" 표시가 떠 있는 화면 좌표 */
   here: { x: number; y: number };
 }
@@ -462,15 +464,6 @@ export function buildIsland(): IslandMap {
     });
   }
 
-  // 걷는 알파카: 1은 상자, 0은 빈손, x는 안개
-  alpaca(S, 6.5, 9.5, 0, { dir: 0, val: '1' });
-  alpaca(S, 9.2, 9.5, 0, { dir: 0, val: '0' });
-  alpaca(S, 11.5, 7.2, 0, { dir: 3, val: '1' });
-  alpaca(S, 7.5, 5.5, 0, { dir: 2, val: '0' });
-  alpaca(S, 5.5, 1.5, 0, { dir: 0, val: '0' });
-  S.over.push(...fogPrims(S, 5.5, 1.5, 0));
-  S.over.push(questionMark(S, 5.5, 1.5, 1.55, 17));
-
   // "지금 위치" 화살표 (CSS로 위아래 4px 떠 있다)
   const [hx, hy] = S.P(6.5, 9.5, 1.5);
   S.over.push({
@@ -495,7 +488,14 @@ export function buildIsland(): IslandMap {
   cloud(S, -3.4, 4.4, 2.4, 0.9);
   cloud(S, 9.6, -1.6, 3.6, 0.8);
   cloud(S, 3.2, 12.6, -1.4, 0.7);
-  return { ...S.render(10), pins: pins.map((p) => p.spot), here: { x: f1(hx), y: f1(hy) } };
+  // 걷는 순서: 앞줄 → 오른쪽으로 꺾어 가운데 줄 → 왼쪽 → 뒷줄
+  const walk: [number, number][] = [];
+  for (let x = 4; x <= 11; x++) walk.push([x, 9]);
+  for (let y = 8; y >= 5; y--) walk.push([11, y]);
+  for (let x = 10; x >= 3; x--) walk.push([x, 5]);
+  for (let y = 4; y >= 1; y--) walk.push([3, y]);
+  for (let x = 4; x <= 10; x++) walk.push([x, 1]);
+  return { ...S.render(10), pins: pins.map((p) => p.spot), here: { x: f1(hx), y: f1(hy) }, walk };
 }
 
 /* ---------------------------------------------------------------- 값 그림 */

@@ -156,6 +156,17 @@
   background: var(--surface);
 }
 
+.tbtns {
+  display: flex;
+  gap: 4px;
+}
+
+.tplay {
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+  color: var(--on-accent) !important;
+}
+
 .tbtn {
   width: var(--icon-button);
   height: var(--icon-button);

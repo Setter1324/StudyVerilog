@@ -48,15 +48,22 @@ function draw(p: Prim, k: number): ReactNode {
   }
 }
 
+/** 그림 요소 목록만 그린다(장면 위에 겹치는 알파카 등) */
+export function IsoPrims({ prims }: { prims: Prim[] }) {
+  return <>{prims.map(draw)}</>;
+}
+
 export interface IsoSvgProps {
   scene: Rendered;
+  /** 장면 위에 그릴 것 (걷는 알파카) */
+  children?: ReactNode;
   /** 화면 읽기 프로그램용 설명. 없으면 장식으로 다룬다 */
   title?: string;
   className?: string;
 }
 
 /** 아이소메트릭 장면을 SVG로 그린다. 장면 계산은 iso.ts가, 이 컴포넌트는 그리기만 한다. */
-export function IsoSvg({ scene, title, className }: IsoSvgProps) {
+export function IsoSvg({ scene, title, className, children }: IsoSvgProps) {
   return (
     <svg
       className={className}
@@ -67,6 +74,7 @@ export function IsoSvg({ scene, title, className }: IsoSvgProps) {
       focusable="false"
     >
       {scene.prims.map(draw)}
+      {children}
     </svg>
   );
 }

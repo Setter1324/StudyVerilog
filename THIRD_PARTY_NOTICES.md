@@ -14,3 +14,5 @@
 | D2Coding VER1.4.0 | OFL-1.1 | https://github.com/naver/d2codingfont | 코드 속 한글. ttf를 글자 변경 없이 woff2로만 바꿨다. `public/fonts/d2coding/LICENSE.txt` |
 
 글꼴은 OFL의 예약 글꼴 이름(Reserved Font Name) 때문에 직접 서브셋하지 않는다.
+
+효과음은 Web Audio로 코드에서 만든다(`src/audio/sfx.ts`). 배경음을 넣으면 파일, 출처, 라이선스를 이 표에 적는다(`content/audio.json`, `public/audio/`).
