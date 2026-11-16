@@ -6,6 +6,9 @@
 
 /* 상단 바 56px (6.1) */
 .bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -349,4 +352,42 @@
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+}
+
+/* 좁은 화면: 위의 실행 버튼 대신 아래에 붙은 실행 버튼 (6.1) */
+.dock {
+  display: none;
+}
+
+@media (max-width: 1099px) {
+  .run {
+    display: none;
+  }
+
+  .page {
+    padding-bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+
+  .dock {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 30;
+    display: block;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--hairline);
+    background: var(--surface);
+  }
+}
+
+/* 터치 기기: 키보드 단축키 안내를 숨기고, 입력 칸 글자를 16px로 해서 iOS가 확대하지 않게 한다 */
+@media (pointer: coarse) {
+  .kbd {
+    display: none;
+  }
+
+  .editor {
+    font-size: 16px;
+  }
 }

@@ -383,6 +383,13 @@ export function Play({ id }: { id: string }) {
         </section>
       </main>
 
+      {/* 좁은 화면: 실행 버튼을 화면 아래에 붙인다 (6.1) */}
+      <div className={s.dock}>
+        <Button block onClick={() => void run()} disabled={running}>
+          {running ? '실행 중' : '실행'}
+        </Button>
+      </div>
+
       <Sheet
         open={sheet}
         title={verdict?.pass ? '맞았어요' : '아직이에요'}

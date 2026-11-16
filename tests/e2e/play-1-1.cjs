@@ -74,6 +74,26 @@ const { chromium } = require(process.env.PW_PATH || 'playwright');
       console.log('dialog:', (await page.getByRole('dialog').innerText()).replace(/\n+/g, ' | '));
       await page.screenshot({ path: 'shots/play-timing.png' });
     });
+    await step('mobile 1-1 (390px, touch)', async () => {
+      const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+      const m = await ctx.newPage();
+      await m.goto(base + '#/play/v1-01');
+      await m.getByLabel('빈칸 1: D를 만드는 연산자').tap();
+      await m.getByLabel('빈칸 1: D를 만드는 연산자').fill('|');
+      await m.getByLabel('빈칸 2: E를 만드는 연산자').fill('&');
+      const run = m.getByRole('button', { name: '실행', exact: true });
+      if ((await run.count()) !== 1) throw new Error(`보이는 실행 버튼이 ${await run.count()}개`);
+      const box = await run.boundingBox();
+      console.log('mobile run button box:', JSON.stringify(box));
+      if (!box || box.y + box.height > 844 || box.y < 0) throw new Error('실행 버튼이 화면 밖에 있다');
+      await m.screenshot({ path: 'shots/mobile-before-run.png' });
+      await run.tap();
+      await m.getByRole('button', { name: '끝으로' }).tap({ timeout: 30000 });
+      await m.getByRole('dialog').waitFor({ timeout: 10000 });
+      console.log('mobile dialog:', (await m.getByRole('dialog').innerText()).replace(/\n+/g, ' | '));
+      await m.screenshot({ path: 'shots/mobile-result.png' });
+      await ctx.close();
+    });
     console.log('E2E PASS');
   } catch (e) {
     console.log('E2E FAIL', e.message);
