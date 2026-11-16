@@ -49,6 +49,8 @@ emconfigure ./configure --host=wasm32-unknown-emscripten
 # their final link step may fail or produce unusable output under Emscripten.
 # Only the object files are needed; the real links are done in step 5, which
 # stops with an error if any object is missing.
+# 하위 폴더가 기대하는 생성 헤더(version_tag.h 등)를 먼저 만든다
+emmake make dep config.h _pli_types.h version_tag.h version_base.h
 emmake make -j"$JOBS" -C ivlpp
 emmake make -j"$JOBS" ivl                    || true
 emmake make -j"$JOBS" -C tgt-vvp vvp.tgt     || true
