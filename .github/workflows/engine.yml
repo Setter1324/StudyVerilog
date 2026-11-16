@@ -1,9 +1,14 @@
 name: engine
 
 # Icarus Verilog를 WebAssembly로 직접 빌드하고, 골든 테스트로 네이티브와 비교한다. (최종계획서 11.3)
-# engine-v* 태그를 push하면 결과를 Release 자산으로 올린다. 앱 빌드는 고정한 Release를 받아 쓴다.
+# engine-v* 태그를 push하거나, 수동 실행에서 release_tag를 주면 결과를 Release 자산으로 올린다. 앱 빌드는 고정한 Release를 받아 쓴다.
 on:
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: '이 이름(engine-v*)으로 태그와 Release를 만든다. 비우면 빌드와 비교만 한다'
+        required: false
+        default: ''
   push:
     tags: ['engine-v*']
   pull_request:
@@ -52,7 +57,7 @@ jobs:
             engine/.out/report.md
 
   release:
-    if: startsWith(github.ref, 'refs/tags/engine-v')
+    if: startsWith(github.ref, 'refs/tags/engine-v') || startsWith(inputs.release_tag, 'engine-v')
     needs: build
     runs-on: ubuntu-latest
     permissions:
@@ -65,6 +70,7 @@ jobs:
       - name: Release 만들기
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.release_tag || github.ref_name }}
         run: |
           cd dist-engine
           {
@@ -78,8 +84,9 @@ jobs:
           } > notes.md
           files=$(find . -maxdepth 4 -type f \( -name '*.js' -o -name '*.wasm' -o -name SHA256SUMS -o -name IVERILOG_COMMIT \))
           # 웹에서 Release를 먼저 만들며 태그를 단 경우에는 자산만 올린다
-          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
-            gh release upload "$GITHUB_REF_NAME" $files --repo "$GITHUB_REPOSITORY" --clobber
+          # 수동 실행이면 태그가 없으므로 이 커밋에 태그를 만든다
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release upload "$TAG" $files --repo "$GITHUB_REPOSITORY" --clobber
           else
-            gh release create "$GITHUB_REF_NAME" $files --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" --notes-file notes.md
+            gh release create "$TAG" $files --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "$TAG" --notes-file notes.md
           fi
