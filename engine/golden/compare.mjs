@@ -106,8 +106,27 @@ for (const name of cases) {
         `native 로그:\n\n\`\`\`\n${n.log}\n\`\`\`\nwasm 로그:\n\n\`\`\`\n${w.log}\n\`\`\`\n` +
         `검사 실패(native): ${nFail.join('; ') || '없음'}\n\n검사 실패(wasm): ${wFail.join('; ') || '없음'}\n`,
     );
+    if (!rawSame && n.vcdText && w.vcdText) {
+      const a = normalizeVcdText(n.vcdText).split(' ');
+      const b = normalizeVcdText(w.vcdText).split(' ');
+      let k = 0;
+      while (k < a.length && a[k] === b[k]) k++;
+      const around = (xs) => xs.slice(Math.max(0, k - 12), k + 12).join(' ');
+      console.log(`--- VCD 원문 차이 (${name}, 토큰 ${k})\nnative: ${around(a)}\nwasm:   ${around(b)}`);
+    }
     if (!logSame) {
       console.log(`--- native log (${name})\n${n.log}\n--- wasm log (${name})\n${w.log}`);
+    }
+  }
+}
+
+// 네이티브 결과를 로그에 남긴다. 저장소의 engine/golden/NN/native/에 옮겨 FixtureRunner와 비교 기준으로 쓴다.
+if (process.env.GOLDEN_PRINT_NATIVE) {
+  for (const name of cases) {
+    for (const f of ['log.txt', 'dump.vcd']) {
+      const text = await read(path.join(outDir, 'native', name, f));
+      if (text === undefined) continue;
+      console.log(`<<<NATIVE ${name}/${f}>>>\n${text}${text.endsWith('\n') ? '' : '\n'}<<<END>>>`);
     }
   }
 }

@@ -38,6 +38,8 @@ jobs:
         run: node engine/golden/run-wasm.mjs engine/.cache/verisim engine/golden engine/.out/wasm
       - name: 비교
         run: node engine/golden/compare.mjs engine/golden engine/.out
+        env:
+          GOLDEN_PRINT_NATIVE: '1'
       - uses: actions/upload-artifact@v4
         if: always()
         with:
