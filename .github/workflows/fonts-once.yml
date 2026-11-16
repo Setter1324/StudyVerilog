@@ -27,9 +27,16 @@ jobs:
           # Pretendard: 가변 글꼴의 동적 서브셋(필요한 글자 구간만 받는다)
           gh release download -R orioncactus/pretendard --pattern 'Pretendard-*.zip' -D "$tmp/pre"
           unzip -q "$tmp"/pre/*.zip -d "$tmp/pre/x"
-          sub=$(find "$tmp/pre/x" -type d -path '*variable/woff2-dynamic-subset' | head -n 1)
-          css=$(find "$tmp/pre/x" -type f -name 'pretendardvariable-dynamic-subset.css' | head -n 1)
-          cp "$sub"/*.woff2 "$dest/pretendard/"
+          find "$tmp/pre/x" -maxdepth 4 -type d | head -n 40
+          find "$tmp/pre/x" -iname '*.zip' | head
+          # 압축 안에 또 압축이 있으면 푼다
+          for z in $(find "$tmp/pre/x" -iname '*.zip'); do unzip -q -o "$z" -d "${z%.zip}"; done
+          css=$(find "$tmp/pre/x" -type f -iname '*variable*dynamic*subset*.css' ! -iname '*.min.css' | head -n 1)
+          [ -n "$css" ] || css=$(find "$tmp/pre/x" -type f -iname '*variable*dynamic*subset*.css' | head -n 1)
+          one=$(find "$tmp/pre/x" -type f -iname 'PretendardVariable.subset.*.woff2' | head -n 1)
+          echo "css=$css one=$one"
+          sub=$(dirname "$one")
+          cp "$sub"/PretendardVariable.subset.*.woff2 "$dest/pretendard/"
           # css 안의 글꼴 경로를 같은 폴더로 맞춘다
           sed -E 's#url\((["'"'"']?)[^)"'"'"']*/([^/)"'"'"']+\.woff2)#url(\1\2#g' "$css" > "$dest/pretendard/pretendard.css"
           gh api repos/orioncactus/pretendard/license --jq .content | base64 -d > "$dest/pretendard/LICENSE.txt"
