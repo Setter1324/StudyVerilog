@@ -1,0 +1,9 @@
+node_modules
+dist
+out
+*.log
+.DS_Store
+.env*
+
+# 강의자료 PDF와 캡처는 저장소에 넣지 않는다 (최종계획서 11.2, 15.1)
+lecture/
