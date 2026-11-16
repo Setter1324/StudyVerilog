@@ -43,6 +43,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: iverilog-wasm
+          include-hidden-files: true
           path: |
             engine/.cache/built/*.js
             engine/.cache/built/*.wasm
@@ -69,11 +70,11 @@ jobs:
           {
             echo "Icarus Verilog (GPL-2.0-or-later)를 WebAssembly로 빌드한 엔진."
             echo
-            echo "- iverilog 커밋: $(cat engine/.cache/built/IVERILOG_COMMIT 2>/dev/null || cat IVERILOG_COMMIT 2>/dev/null)"
+            echo "- iverilog 커밋: $(cat $(find . -name IVERILOG_COMMIT | head -n 1))"
             echo "- 소스: https://github.com/steveicarus/iverilog"
             echo "- 빌드 스크립트와 패치: engine/build/ (이 태그)"
             echo
-            cat engine/.out/report.md 2>/dev/null || true
+            cat $(find . -name report.md | head -n 1) 2>/dev/null || true
           } > notes.md
           files=$(find . -maxdepth 4 -type f \( -name '*.js' -o -name '*.wasm' -o -name SHA256SUMS -o -name IVERILOG_COMMIT \))
           gh release create "$GITHUB_REF_NAME" $files --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" --notes-file notes.md
