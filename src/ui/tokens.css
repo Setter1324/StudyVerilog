@@ -109,7 +109,7 @@
   --ease-ui: ease-out;
   --dur-tick: 600ms;
 
-  --font-sans: 'Pretendard Variable', Pretendard, 'Noto Sans KR', Inter, system-ui, sans-serif;
+  --font-sans: Pretendard, 'Pretendard Variable', 'Noto Sans KR', Inter, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', D2Coding, ui-monospace, monospace;
 }
 
@@ -162,12 +162,30 @@ body {
   }
 }
 
-/* 본문 글꼴: Pretendard 가변 글꼴. 자주 쓰는 한글 2350자와 라틴만 남긴 서브셋이고,
+/* 본문 글꼴: Pretendard. 저작자가 배포하는 KS X 1001 서브셋(굵기 4개)을 그대로 쓴다.
    없는 글자는 --font-sans의 다음 글꼴로 그린다 (7.5) */
 @font-face {
-  font-family: 'Pretendard Variable';
-  src: url('/fonts/pretendard/PretendardVariable-subset.woff2') format('woff2-variations');
-  font-weight: 45 920;
+  font-family: Pretendard;
+  src: url('/fonts/pretendard/Pretendard-Regular.subset.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: Pretendard;
+  src: url('/fonts/pretendard/Pretendard-SemiBold.subset.woff2') format('woff2');
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: Pretendard;
+  src: url('/fonts/pretendard/Pretendard-Bold.subset.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: Pretendard;
+  src: url('/fonts/pretendard/Pretendard-ExtraBold.subset.woff2') format('woff2');
+  font-weight: 800;
   font-display: swap;
 }
 
@@ -186,7 +204,7 @@ body {
 }
 @font-face {
   font-family: D2Coding;
-  src: url('/fonts/d2coding/D2Coding-hangul.woff2') format('woff2');
+  src: url('/fonts/d2coding/D2Coding.woff2') format('woff2');
   unicode-range: U+1100-11FF, U+3130-318F, U+AC00-D7A3;
   font-display: swap;
 }
