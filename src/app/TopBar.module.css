@@ -63,5 +63,31 @@
 
 .tools {
   display: flex;
+  align-items: center;
   gap: 8px;
+}
+
+/* "1-4 이어서" 알약: 한 번 눌러 플레이로 간다 (걷기 박자와 상단 바 계획 6.5) */
+.resume {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--icon-button);
+  padding: 0 16px;
+  border-radius: var(--radius-pill);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background var(--dur-ui) var(--ease-ui);
+}
+
+.resume:hover {
+  background: color-mix(in srgb, var(--accent-soft), var(--accent) 12%);
+}
+
+.resume:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }

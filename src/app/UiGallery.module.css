@@ -73,3 +73,11 @@
   color: var(--muted);
   text-align: right;
 }
+
+/* 해의 길 보기: 줄마다 띄운다 */
+.stack {
+  display: grid;
+  gap: 18px;
+  max-width: 480px;
+  padding: 8px 0;
+}

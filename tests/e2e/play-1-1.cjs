@@ -111,6 +111,27 @@ const { chromium } = require(process.env.PW_PATH || 'playwright');
       await page.getByRole('button', { name: '실행', exact: true }).click();
       if (!(await result('play-1-15')).includes('맞았어요')) throw new Error('1-15 정답인데 맞았어요가 아니다');
     });
+    await step('keyboard bar 1-4 (징검다리 → 실행)', async () => {
+      await page.goto(base + '#/play/v1-04');
+      // 뒤로 링크 다음 Tab 한 번에 징검다리의 지금 칸에 닿는다
+      await page.getByRole('link', { name: '스테이지 목록으로' }).focus();
+      await page.keyboard.press('Tab');
+      const cur = await page.evaluate(() => document.activeElement?.getAttribute('aria-current'));
+      if (cur !== 'step') throw new Error(`Tab 한 번에 지금 칸에 닿아야 하는데 ${cur}`);
+      await page.keyboard.press('ArrowRight');
+      const next = await page.evaluate(() => document.activeElement?.getAttribute('aria-label') ?? '');
+      console.log('arrow right:', next);
+      if (!next.startsWith('1-5')) throw new Error('방향키로 다음 칸에 가야 한다');
+      let tabs = 0;
+      for (; tabs < 6; tabs++) {
+        const name = await page.evaluate(() => (document.activeElement?.textContent ?? '').trim());
+        if (name === '실행') break;
+        await page.keyboard.press('Tab');
+      }
+      console.log('tabs from stones to run:', tabs);
+      if (tabs >= 6) throw new Error('징검다리에서 Tab 몇 번 안에 실행 버튼에 닿아야 한다');
+      await page.screenshot({ path: 'shots/play-bar.png' });
+    });
     await step('mobile 1-1 (390px, touch)', async () => {
       const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
       const m = await ctx.newPage();
@@ -123,6 +144,9 @@ const { chromium } = require(process.env.PW_PATH || 'playwright');
       const box = await run.boundingBox();
       console.log('mobile run button box:', JSON.stringify(box));
       if (!box || box.y + box.height > 844 || box.y < 0) throw new Error('실행 버튼이 화면 밖에 있다');
+      const wide = await m.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+      console.log('mobile horizontal overflow:', wide);
+      if (wide > 0) throw new Error(`폭 390px에서 가로 스크롤이 ${wide}px 생긴다`);
       await m.screenshot({ path: 'shots/mobile-before-run.png' });
       await run.tap();
       await m.getByRole('button', { name: '끝으로' }).tap({ timeout: 30000 });

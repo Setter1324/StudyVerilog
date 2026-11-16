@@ -8,6 +8,8 @@ import {
   LockedLine,
   ProgressBar,
   Sheet,
+  StageStones,
+  SunTrack,
   Tabs,
   ValueBadge,
   ZonePin,
@@ -18,6 +20,8 @@ import s from './UiGallery.module.css';
 
 const VALUES: SignalValue[] = ['1', '0', 'x', 'z'];
 const ZONES: ZoneId[] = [1, 2, 3, 4, 5, 6];
+const STONES = Array.from({ length: 15 }, (_, i) => ({ id: `d${i + 1}`, no: `1-${i + 1}`, title: `스테이지 ${i + 1}` }));
+const STONES_DONE = { d1: true, d2: true, d3: true };
 
 /** 컴포넌트 보기 (#/ui). 최종계획서 7.7의 11개를 한 화면에 모은다. */
 export function UiGallery() {
@@ -29,7 +33,7 @@ export function UiGallery() {
   return (
     <main className={s.page}>
       <h1 className={s.h1}>컴포넌트</h1>
-      <p className={s.muted}>최종계획서 7.7의 컴포넌트 11개. 메뉴에는 없는 개발용 화면이에요.</p>
+      <p className={s.muted}>최종계획서 7.7의 컴포넌트 11개와 플레이 상단 바의 2개. 메뉴에는 없는 개발용 화면이에요.</p>
 
       <section className={s.section}>
         <h2 className={s.h2}>Button · IconButton</h2>
@@ -121,6 +125,22 @@ export function UiGallery() {
             </code>
           </div>
           <LockedLine line={4}>endmodule</LockedLine>
+        </div>
+      </section>
+
+      <section className={s.section}>
+        <h2 className={s.h2}>StageStones · SunTrack</h2>
+        <p className={s.muted}>징검다리: 통과 3개, 지금 1-4. 아래는 통과한 순간(▼가 다음 칸으로 뛴다)과 틀린 순간(지금 칸이 흔들린다).</p>
+        <StageStones stages={STONES} current="d4" done={STONES_DONE} zone={1} href={() => '#/ui'} />
+        <StageStones stages={STONES} current="d4" done={{ ...STONES_DONE, d4: true }} zone={1} hop href={() => '#/ui'} />
+        <StageStones stages={STONES} current="d4" done={STONES_DONE} zone={1} shake={1} href={() => '#/ui'} />
+        <p className={s.muted}>해의 길: 실행 전, 엔진 받는 중, 재생 중(40%), 해가 짐, 통과.</p>
+        <div className={s.stack}>
+          <SunTrack state="idle" />
+          <SunTrack state="loading" />
+          <SunTrack state="time" value={0.4} />
+          <SunTrack state="dusk" />
+          <SunTrack state="dusk" passed />
         </div>
       </section>
 
