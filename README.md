@@ -16,4 +16,5 @@ npm run dev
 
 ## 라이선스
 
-미정. 엔진(Icarus Verilog)이 GPL-2.0-or-later라서 계획서 15.1절에 따라 정한다.
+앱 코드는 [MIT](LICENSE) (Copyright (c) 2026 김주찬).
+실행 엔진(Icarus Verilog)은 GPL-2.0-or-later를 그대로 따른다. 엔진 소스와 빌드 방법은 `engine/`에 둔다. 그 밖의 의존성은 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)에 있다.
