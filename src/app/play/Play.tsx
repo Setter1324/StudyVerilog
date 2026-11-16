@@ -11,7 +11,7 @@ import { useProgress } from '../../state/progress';
 import { Button, Chip, CodeBlank, IconButton, LockedLine, Sheet, StageStones, SunTrack, Tabs, ZonePin } from '../../ui';
 import { sfx } from '../../audio/sfx';
 import { BEAT_TICKS, beatAt, tickAt, type PlayBase } from '../../world/beat';
-import { buildCircuit, circuitWalkers, passingText } from '../../world/circuit';
+import { buildCircuit, circuitWalkers, isLabel, passingText } from '../../world/circuit';
 import { Walkers } from '../../world/Walkers';
 import { IsoSvg } from '../../world/IsoSvg';
 import { TopBar } from '../TopBar';
@@ -107,10 +107,14 @@ function World({
   const walkers = circuitWalkers(data.scene, values);
   const dusk = timeline !== null && t >= timeline.end;
   const busy = passingText(data.scene, passing);
+  // 이름표는 알파카 위 층에 그린다. 길 가운데에 선 알파카가 이름표와 지연 칸을 가리지 않는다
+  const ground = { ...scene, prims: scene.prims.filter((p) => !isLabel(p)) };
+  const labels = scene.prims.filter(isLabel);
   return (
     <div className={dusk ? `${s.world} ${s.dusk}` : s.world}>
       <IsoSvg
-        scene={scene}
+        scene={ground}
+        top={labels}
         className={s.worldSvg}
         title={`t=${t}의 마을. ${Object.entries(values)
           .map(([k, v]) => `${k}=${v}`)

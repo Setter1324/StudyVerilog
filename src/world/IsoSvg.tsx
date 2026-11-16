@@ -57,13 +57,15 @@ export interface IsoSvgProps {
   scene: Rendered;
   /** 장면 위에 그릴 것 (걷는 알파카) */
   children?: ReactNode;
+  /** children보다 위에 그릴 그림 요소 (이름표가 알파카에 가려지지 않게) */
+  top?: Prim[];
   /** 화면 읽기 프로그램용 설명. 없으면 장식으로 다룬다 */
   title?: string;
   className?: string;
 }
 
 /** 아이소메트릭 장면을 SVG로 그린다. 장면 계산은 iso.ts가, 이 컴포넌트는 그리기만 한다. */
-export function IsoSvg({ scene, title, className, children }: IsoSvgProps) {
+export function IsoSvg({ scene, title, className, children, top }: IsoSvgProps) {
   return (
     <svg
       className={className}
@@ -75,6 +77,7 @@ export function IsoSvg({ scene, title, className, children }: IsoSvgProps) {
     >
       {scene.prims.map(draw)}
       {children}
+      {top?.map(draw)}
     </svg>
   );
 }
