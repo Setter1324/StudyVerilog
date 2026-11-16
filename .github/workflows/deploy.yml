@@ -24,8 +24,8 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - name: 엔진 wasm 받기 (고정 커밋, 해시 확인)
-        run: node engine/fetch-verisim.mjs public/engine
+      - name: 엔진 wasm 받기 (engine-v* Release, 해시 확인)
+        run: node engine/fetch-engine.mjs public/engine
       - run: npm run build
       - uses: actions/upload-pages-artifact@v3
         with:

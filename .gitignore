@@ -12,5 +12,5 @@ lecture/
 engine/.cache/
 engine/.out/
 
-# 엔진 wasm은 빌드 때 받는다 (engine/fetch-verisim.mjs)
+# 엔진 wasm은 빌드 때 받는다 (engine/fetch-engine.mjs)
 public/engine/

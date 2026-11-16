@@ -20,7 +20,7 @@ await writeFile(
   path.join(outDir, 'VERSION'),
   built
     ? `직접 빌드한 wasm (Icarus Verilog ${built.slice(0, 7)}, engine/build)\n`
-    : 'VeriSim wasm (Icarus Verilog 14.0 devel, c7530db)\n',
+    : `${JSON.parse(await readFile(path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'engine.lock.json'), 'utf8')).name} (Icarus Verilog 14.0 devel, c7530db)\n`,
 );
 
 const cases = (await readdir(goldenDir, { withFileTypes: true }))
