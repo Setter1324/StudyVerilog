@@ -25,7 +25,8 @@
           2,
           1
         ],
-        "roof": "teal"
+        "roof": "teal",
+        "out": "w"
       },
       {
         "id": "and",
@@ -34,7 +35,8 @@
           5,
           2
         ],
-        "roof": "blue"
+        "roof": "blue",
+        "out": "Y"
       }
     ],
     "roads": [

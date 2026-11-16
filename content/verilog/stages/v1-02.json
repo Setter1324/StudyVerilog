@@ -36,7 +36,8 @@
           3,
           1
         ],
-        "roof": "teal"
+        "roof": "teal",
+        "out": "Y"
       }
     ],
     "roads": [
