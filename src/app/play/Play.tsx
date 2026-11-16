@@ -1,7 +1,8 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { WasmRunner } from '../../runner/wasmRunner';
 import type { RunResult } from '../../runner/types';
-import { fillTemplate, grade, type Grade } from '../../sim/grade';
+import type { Grade } from '../../sim/grade';
+import { ANSWER, editable, fileKey, gradeStage, stageSources, visibleSource } from '../../sim/stage';
 import type { Timeline } from '../../sim/types';
 import { buildTimeline, valueAt } from '../../sim/vcd';
 import { STAGES, stageById, stageData, stagesOf, TYPE_NAMES, zoneById, type StageData } from '../../state/content';
@@ -11,6 +12,8 @@ import { buildCircuit } from '../../world/circuit';
 import { IsoSvg } from '../../world/IsoSvg';
 import { TopBar } from '../TopBar';
 import s from './Play.module.css';
+import { CodeEditor } from './CodeEditor';
+import { Question } from './Question';
 import { Waveform } from './Waveform';
 
 // 화면 코드는 Runner와 Timeline만 안다 (14.3)
@@ -139,21 +142,25 @@ export function Play({ id }: { id: string }) {
 
   const run = useCallback(async () => {
     if (!data || running) return;
+    if (data.question && !(values[ANSWER] ?? '').trim()) {
+      setError(data.question.kind === 'choice' ? '먼저 답을 골라요. 고른 뒤에 재생해서 확인해요.' : '먼저 숫자를 적어요.');
+      return;
+    }
     setRunning(true);
     setError(null);
     setPlaying(false);
     setDismissed(true);
     try {
-      const files = Object.entries(data.files).map(([name, f]) => ({ name, text: fillTemplate(f.template, values) }));
-      const res = await runner.run({ files, top: data.top });
+      const res = await runner.run({ files: stageSources(data, values), top: data.top });
       setResult(res);
       if (!res.ok || !res.vcd) {
         setTimeline(null);
         setVerdict(null);
+        setT(0);
         return;
       }
       const tl = buildTimeline(res.vcd, res.log);
-      const g = grade(tl, data.check, data.bind);
+      const g = gradeStage(data, values, tl);
       setTimeline(tl);
       setVerdict(g);
       if (g.pass && meta) pass(meta.id);
@@ -161,7 +168,7 @@ export function Play({ id }: { id: string }) {
       setDismissed(false);
       setPlaying(true);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(`엔진을 불러오지 못했어요: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setRunning(false);
     }
@@ -219,7 +226,7 @@ export function Play({ id }: { id: string }) {
 
   const errorLines = new Set(result && !result.ok ? result.diagnostics.map((d) => d.line) : []);
   const consoleText = error
-    ? `엔진을 불러오지 못했어요: ${error}`
+    ? error
     : result
       ? result.timedOut
         ? `${result.log}\n해가 지지 않아요. $finish가 있는지 봐요.`
@@ -319,15 +326,33 @@ export function Play({ id }: { id: string }) {
           )}
           {fileNames.length === 1 && <div className={s.fileName}>{fileNames[0]}</div>}
           <div role={fileNames.length > 1 ? 'tabpanel' : undefined} id={`file-${tab}`}>
-            <FillEditor
-              template={data.files[tab]?.template ?? ''}
-              values={values}
-              onChange={(bid, v) => setDraft(id, { ...values, [bid]: v })}
-              wrong={verdict ? !verdict.pass : false}
-              errorLines={errorLines}
-              labels={Object.fromEntries(Object.entries(data.blanks).map(([k, b]) => [k, b.label]))}
-            />
+            {data.type === 'fill' ? (
+              <FillEditor
+                template={data.files[tab]?.template ?? ''}
+                values={values}
+                onChange={(bid, v) => setDraft(id, { ...values, [bid]: v })}
+                wrong={verdict ? !verdict.pass : false}
+                errorLines={errorLines}
+                labels={Object.fromEntries(Object.entries(data.blanks ?? {}).map(([k, b]) => [k, b.label]))}
+              />
+            ) : (
+              <CodeEditor
+                label={tab}
+                value={visibleSource(data, tab, values)}
+                readOnly={!editable(data.type)}
+                errorLines={errorLines}
+                onChange={(v) => setDraft(id, { ...values, [fileKey(tab)]: v })}
+              />
+            )}
           </div>
+          {data.question && (
+            <Question
+              q={data.question}
+              value={values[ANSWER] ?? ''}
+              onChange={(v) => setDraft(id, { ...values, [ANSWER]: v })}
+              result={verdict && timeline && t >= timeline.end ? verdict.pass : undefined}
+            />
+          )}
           <div className={s.editorActions}>
             <Button variant="secondary" onClick={() => setDraft(id, {})}>
               처음 코드로

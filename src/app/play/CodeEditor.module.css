@@ -1,0 +1,50 @@
+.wrap {
+  display: flex;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--surface);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.wrap:focus-within {
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+.readOnly {
+  background: var(--locked-bg);
+}
+
+.gutter {
+  flex: none;
+  padding: 8px 8px 8px 10px;
+  overflow: hidden;
+  color: var(--muted);
+  text-align: right;
+  user-select: none;
+  min-width: 3.4ch;
+}
+
+.err {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.text {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 0;
+  outline: none;
+  resize: vertical;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  line-height: inherit;
+  tab-size: 2;
+  white-space: pre;
+  overflow: auto;
+}

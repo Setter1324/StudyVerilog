@@ -1,0 +1,99 @@
+{
+  "id": "v1-02",
+  "draft": "문구와 정답은 초안이다. 강의자료 기준으로 주찬이 확인한다(최종계획서 14.4).",
+  "type": "predict",
+  "top": "test",
+  "intro": "A는 집(reg), Y는 길(wire)이에요. 코드를 읽고 t=10에서 Y의 값을 골라요. 고른 뒤 실행하면 마을이 재생돼요.",
+  "files": {
+    "testbench.sv": {
+      "template": "module test;\n  reg A;   // 집: 새 값이 올 때까지 값을 보관해요\n  wire Y;  // 길: 값을 저장하지 않고 흘려보내요\n\n  not (Y, A);\n\n  initial begin\n    $monitor(\"%3t: A=%b Y=%b\", $time, A, Y);\n    A = 0;\n    #10 A = 1;\n    #10 $finish;\n  end\nendmodule\n"
+    }
+  },
+  "question": {
+    "kind": "choice",
+    "prompt": "t=10에서 Y는?",
+    "signal": "Y",
+    "time": 10,
+    "choices": [
+      "0",
+      "1",
+      "x"
+    ]
+  },
+  "hints": [
+    "not 게이트는 들어온 값을 뒤집어요.",
+    "t=10에 A가 1이 돼요. 지연이 없으면 Y는 같은 시각에 바뀌어요.",
+    "1을 뒤집으면 0이에요."
+  ],
+  "scene": {
+    "cols": 8,
+    "rows": 3,
+    "gates": [
+      {
+        "id": "not",
+        "label": "NOT",
+        "at": [
+          3,
+          1
+        ],
+        "roof": "teal"
+      }
+    ],
+    "roads": [
+      {
+        "signal": "A",
+        "cells": [
+          [
+            1,
+            1
+          ],
+          [
+            2,
+            1
+          ]
+        ]
+      },
+      {
+        "signal": "Y",
+        "cells": [
+          [
+            4,
+            1
+          ],
+          [
+            5,
+            1
+          ],
+          [
+            6,
+            1
+          ]
+        ]
+      }
+    ],
+    "houses": [
+      {
+        "signal": "A",
+        "at": [
+          0,
+          1
+        ]
+      },
+      {
+        "signal": "Y",
+        "at": [
+          7,
+          1
+        ]
+      }
+    ]
+  },
+  "bind": {
+    "A": "test.A",
+    "Y": "test.Y"
+  },
+  "check": [],
+  "solution": {
+    "answer": "0"
+  }
+}

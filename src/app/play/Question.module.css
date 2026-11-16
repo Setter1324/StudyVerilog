@@ -1,0 +1,85 @@
+.box {
+  margin: 0;
+  padding: 14px;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.prompt {
+  padding: 0 4px;
+  font-weight: 800;
+}
+
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 64px;
+  min-height: var(--icon-button);
+  padding: 0 16px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.choice input {
+  accent-color: var(--accent);
+}
+
+.choice:focus-within {
+  box-shadow: var(--focus-ring);
+}
+
+.on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+.number {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  font-weight: 700;
+}
+
+.number input {
+  width: 8ch;
+  min-height: var(--icon-button);
+  padding: 0 12px;
+  border: 1.5px dashed var(--accent);
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 16px;
+}
+
+.number input:focus-visible {
+  outline: none;
+  border-style: solid;
+  box-shadow: var(--focus-ring);
+}
+
+.ok {
+  margin: 10px 0 0;
+  color: var(--success);
+  font-weight: 700;
+}
+
+.no {
+  margin: 10px 0 0;
+  color: var(--danger);
+  font-weight: 700;
+}

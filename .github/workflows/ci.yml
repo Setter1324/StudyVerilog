@@ -42,6 +42,8 @@ jobs:
         run: node engine/golden/compare.mjs engine/golden engine/.out
         env:
           GOLDEN_PRINT_NATIVE: '1'
+      - name: 스테이지 검증 (정답 예시는 통과, 시작 코드는 실패)
+        run: node engine/golden/stages.mjs engine/.cache/verisim content/verilog/stages
       - uses: actions/upload-artifact@v4
         if: always()
         with:
