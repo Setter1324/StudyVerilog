@@ -1,5 +1,6 @@
 // 화면 스모크 테스트(임시): 1-1의 빈칸을 채우고 실행해서 결과 판을 본다.
 // shots.yml에서 돈다. Playwright를 package.json에 넣기 전까지 쓰는 스크립트다.
+/* global document, window -- page.evaluate 안의 코드는 브라우저에서 돈다 */
 const { chromium } = require(process.env.PW_PATH || 'playwright');
 
 (async () => {
