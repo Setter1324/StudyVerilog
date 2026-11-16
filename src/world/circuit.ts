@@ -1,6 +1,5 @@
 // 스테이지 장면: 길(신호), 작업장(게이트), 집(출력)을 칸에 놓는다. 걷는 알파카는 walkers.ts가 그린다. (최종계획서 8.1, 9.4)
 // 장면은 스테이지 JSON의 scene에서 온다. 값만 시뮬레이션(타임라인)에서 가져온다.
-import type { Passing } from '../sim/delays';
 import { faces, Scene, type Prim, type Rendered } from './iso';
 import { C } from './island';
 import type { WalkPath } from './walkers';
@@ -8,16 +7,10 @@ import type { WalkPath } from './walkers';
 export interface SceneSpec {
   cols: number;
   rows: number;
-  /** out: 건물의 출력 신호 이름(bind의 짧은 이름). 있으면 코드의 지연(#N)을 건물에서 틱 단위로 센다 */
-  gates: { id: string; label: string; at: [number, number]; roof?: 'teal' | 'blue' | 'gray'; out?: string }[];
+  gates: { id: string; label: string; at: [number, number]; roof?: 'teal' | 'blue' | 'gray' }[];
   roads: { signal: string; cells: [number, number][] }[];
   houses?: { signal: string; at: [number, number] }[];
-  /** 한 박자의 틱 수. 테스트벤치가 #10이 아닌 간격으로 값을 바꿀 때만 쓴다(기본 10) */
-  beatTicks?: number;
 }
-
-/** 지연 칸을 하나하나 그리는 상한. 넘으면 남은 틱 수를 숫자로 적는다 (걷기 박자 계획 5.3) */
-const MAX_CELLS = 6;
 
 const ROOF = { teal: C.roofTeal, blue: C.roofBlue, gray: C.roofGray } as const;
 const f1 = (x: number) => +x.toFixed(1);
@@ -25,14 +18,8 @@ const f1 = (x: number) => +x.toFixed(1);
 /**
  * @param values 신호 이름 → 그 시각의 값 ('1', '0', 'x', 'z', 벡터는 첫 글자만 본다)
  * @param highlight 강조할 신호 (코드에서 마우스를 올린 신호)
- * @param passing 건물 id → 지금 출력을 바꾸는 중이면 몇 틱째인지
  */
-export function buildCircuit(
-  spec: SceneSpec,
-  values: Record<string, string>,
-  highlight?: string,
-  passing: Record<string, Passing> = {},
-): Rendered {
+export function buildCircuit(spec: SceneSpec, values: Record<string, string>, highlight?: string): Rendered {
   const S = new Scene();
   const road = new Map<string, string>(); // "i,j" → signal
   for (const r of spec.roads) for (const [i, j] of r.cells) road.set(`${i},${j}`, r.signal);
@@ -84,10 +71,14 @@ export function buildCircuit(
       { x0: i + 0.04, x1: i + 0.96, y0: j + 0.06, y1: j + 0.96, z0: 0.8, z1: 0.96, color: roof },
     ]);
     const [sx, sy] = S.P(i + 0.5, j + 0.5, 1.25);
-    const sign: Prim[] = [{ kind: 'text', x: f1(sx), y: f1(sy), text: g.label, size: 14, fill: 'var(--text)', stroke: C.white, sw: 3 }];
-    const p = passing[g.id];
-    if (p) sign.push(...delayCells(sx, sy + 7, p));
-    S.over.push({ kind: 'group', id: `gate-${g.id}`, className: 'gateSign', children: sign });
+    S.over.push({
+      kind: 'group',
+      id: `gate-${g.id}`,
+      className: 'gateSign',
+      children: [
+        { kind: 'text', x: f1(sx), y: f1(sy), text: g.label, size: 14, fill: 'var(--text)', stroke: C.white, sw: 3 },
+      ],
+    });
   }
 
   // 출력 집
@@ -116,40 +107,6 @@ export function buildCircuit(
   }
   S.over.push(...labels);
   return S.render(28);
-}
-
-/**
- * 건물 이름표 아래의 지연 칸: N개를 그리고 한 틱에 하나씩 채운다. N이 6을 넘으면 남은 틱 수를 적는다. (5.3)
- * (cx, top)은 줄의 가운데 위.
- */
-function delayCells(cx: number, top: number, p: Passing): Prim[] {
-  if (p.total > MAX_CELLS) {
-    return [{ kind: 'text', x: f1(cx), y: f1(top + 10), text: `${p.left}틱 남음`, size: 11, fill: 'var(--accent-text)', stroke: C.white, sw: 3 }];
-  }
-  const size = 7;
-  const gap = 3;
-  const width = p.total * size + (p.total - 1) * gap;
-  const out: Prim[] = [];
-  for (let k = 0; k < p.total; k++) {
-    const x = cx - width / 2 + k * (size + gap);
-    const on = k < p.step;
-    out.push({
-      kind: 'poly',
-      points: `${f1(x)},${f1(top)} ${f1(x + size)},${f1(top)} ${f1(x + size)},${f1(top + size)} ${f1(x)},${f1(top + size)}`,
-      fill: on ? 'var(--accent)' : C.white,
-      stroke: on ? 'var(--accent)' : 'var(--muted)',
-      sw: 1.2,
-    });
-  }
-  return out;
-}
-
-/** 지연 칸의 설명글: "OR, 3틱 중 2틱째" */
-export function passingText(spec: SceneSpec, passing: Record<string, Passing>): string[] {
-  return spec.gates.flatMap((g) => {
-    const p = passing[g.id];
-    return p ? [`${g.label}, ${p.total}틱 중 ${p.step}틱째`] : [];
-  });
 }
 
 /** 길마다 걷는 알파카: 1은 상자, 0은 빈손, x는 안개, z는 아무도 없다 (7.2) */

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { BEAT_SECONDS, BLEND_MS } from './beat';
+import { BEAT_SECONDS } from './beat';
 import { IsoPrims } from './IsoSvg';
 import { poseAt, tripPose, walkersOn, walkerSprite, type Dir, type WalkerKind, type WalkerPose, type WalkPath } from './walkers';
 
@@ -26,34 +26,12 @@ interface Item {
   offset: number;
 }
 
-const lerp = (a: number, b: number, k: number) => a + (b - a) * k;
-const lerpPose = (a: WalkerPose, b: WalkerPose, k: number): WalkerPose => ({
-  x: lerp(a.x, b.x, k),
-  y: lerp(a.y, b.y, k),
-  opacity: lerp(a.opacity, b.opacity, k),
-  dir: b.dir,
-});
-
-export interface WalkersProps {
-  paths: WalkPath[];
-  pace?: Pace;
-  /**
-   * 박자 시계(trip일 때). 프레임 시각(ms)을 받아 박자 위치를 돌려준다. null이면 길 가운데에 선다.
-   * 없으면 페이지 시각으로 늘 걷는다. 플레이 화면은 재생 시계에서 계산해 넘긴다. (걷기 박자 계획 5.2)
-   */
-  clock?: (now: number) => number | null;
-}
-
 /**
  * 길마다 알파카가 걷는다. React는 처음 한 번만 그리고,
- * 움직임은 requestAnimationFrame에서 transform 속성만 바꾼다. 위치는 박자 시계 하나에서 계산한다.
+ * 움직임은 requestAnimationFrame에서 transform 속성만 바꾼다.
  */
-export function Walkers({ paths, pace = 'trip', clock }: WalkersProps) {
+export function Walkers({ paths, pace = 'trip' }: { paths: WalkPath[]; pace?: Pace }) {
   const root = useRef<SVGGElement>(null);
-  // 서기와 걷기 사이를 잇기 위해 마지막으로 그린 자세를 기억한다(다시 그려져도 남는다)
-  const shown = useRef<WalkerPose[]>([]);
-  const mode = useRef<'walk' | 'stand' | null>(null);
-  const blend = useRef<{ from: WalkerPose[]; at: number } | null>(null);
   const items: Item[] = paths.flatMap((p, pi) => {
     if (p.kind === null) return [];
     const kind: WalkerKind = p.kind;
@@ -79,8 +57,8 @@ export function Walkers({ paths, pace = 'trip', clock }: WalkersProps) {
         d.style.display = d.dataset.dir === String(pose.dir) ? '' : 'none';
       });
     };
-    const target = (it: Item, now: number, beat: number | null) =>
-      pace === 'trip' ? tripPose(it.path, (beat ?? 0.5) + it.offset) : poseAt(it.path, now / 1000 / SECONDS_PER_CELL + it.offset);
+    const poseOf = (it: Item, secs: number) =>
+      pace === 'trip' ? tripPose(it.path, secs / BEAT_SECONDS + it.offset) : poseAt(it.path, secs / SECONDS_PER_CELL + it.offset);
     if (reducedMotion()) {
       // 움직임 줄이기: 길 가운데에 세운다(위상 0.5). 시각 0의 자리는 투명해서 보이지 않는다
       nodes.forEach((node, i) => {
@@ -90,24 +68,12 @@ export function Walkers({ paths, pace = 'trip', clock }: WalkersProps) {
       });
       return;
     }
-    // 시계는 하나다. 다시 그려져도 알파카가 제자리로 튀지 않고, 길마다 어긋나지 않는다
+    // 시계는 페이지 기준 하나다. 다시 그려져도 알파카가 제자리로 튀지 않고, 길마다 어긋나지 않는다
     let raf = 0;
     const frame = (now: number) => {
-      const beat = pace === 'trip' ? (clock ? clock(now) : now / 1000 / BEAT_SECONDS) : null;
-      const m = pace === 'trip' && beat === null ? 'stand' : 'walk';
-      if (mode.current !== null && mode.current !== m) blend.current = { from: shown.current.slice(), at: now };
-      mode.current = m;
-      const b = blend.current;
-      const k = b ? Math.min(1, (now - b.at) / BLEND_MS) : 1;
-      if (k >= 1) blend.current = null;
       nodes.forEach((node, i) => {
         const it = items[i];
-        if (!it) return;
-        let pose = target(it, now, beat);
-        const from = b?.from[i];
-        if (from && k < 1) pose = lerpPose(from, pose, k * (2 - k));
-        shown.current[i] = pose;
-        draw(node, pose);
+        if (it) draw(node, poseOf(it, now / 1000));
       });
       raf = requestAnimationFrame(frame);
     };

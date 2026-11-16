@@ -63,8 +63,7 @@
           1
         ]
       }
-    ],
-    "beatTicks": 5
+    ]
   },
   "bind": {
     "clk": "test.clk"
