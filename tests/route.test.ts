@@ -10,6 +10,7 @@ describe('parseHash', () => {
   it('스테이지 목록과 도감', () => {
     expect(parseHash('#/stages')).toEqual({ name: 'stages' });
     expect(parseHash('#/guide')).toEqual({ name: 'guide' });
+    expect(parseHash('#/ui')).toEqual({ name: 'ui' });
   });
 
   it('플레이 화면은 스테이지 id를 읽는다', () => {

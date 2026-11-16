@@ -1,0 +1,36 @@
+.blank {
+  display: inline-block;
+  height: 1.6em;
+  padding: 0 0.5ch;
+  margin: 0 1px;
+  border: 1.5px dashed var(--accent);
+  border-radius: 6px;
+  background: var(--accent-soft);
+  color: inherit;
+  font-family: var(--font-mono);
+  font-size: inherit;
+  line-height: 1.5;
+  vertical-align: baseline;
+  transition:
+    border-color var(--dur-ui) var(--ease-ui),
+    box-shadow var(--dur-ui) var(--ease-ui);
+}
+
+.blank:focus-visible {
+  outline: none;
+  border-style: solid;
+  box-shadow: var(--focus-ring);
+}
+
+.empty::placeholder {
+  color: var(--accent);
+  opacity: 0.7;
+}
+
+.filled {
+  border-style: solid;
+}
+
+.wrong {
+  border: 1.5px solid var(--danger);
+}

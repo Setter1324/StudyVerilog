@@ -1,0 +1,67 @@
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 14px clamp(20px, 4vw, 56px);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--icon-button);
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+}
+
+.kw {
+  color: var(--accent);
+}
+
+.nav {
+  display: flex;
+  gap: 4px;
+  margin-right: auto;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--icon-button);
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color var(--dur-ui) var(--ease-ui);
+}
+
+.link:hover {
+  background: var(--surface-soft);
+  color: var(--text);
+}
+
+.link:focus-visible,
+.brand:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-pill);
+}
+
+.link[aria-current='page'] {
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+}
+
+.tools {
+  display: flex;
+  gap: 8px;
+}

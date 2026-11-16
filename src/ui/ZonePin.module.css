@@ -1,0 +1,26 @@
+.pin {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  border-radius: var(--radius-pill);
+  color: var(--on-zone);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.md {
+  width: 32px;
+  height: 32px;
+  font-size: 15px;
+}
+
+.sm {
+  width: 22px;
+  height: 22px;
+  font-size: 12px;
+}
+
+.dimmed {
+  opacity: 0.45;
+}

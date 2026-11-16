@@ -1,0 +1,12 @@
+{
+  "subject": "VERILOG",
+  "weeks": "1~8주차",
+  "zones": [
+    { "id": 1, "name": "게이트 마을", "weeks": "1-2주차", "topics": "assign, 게이트 프리미티브와 지연, 테스트벤치, $monitor", "ready": true },
+    { "id": 2, "name": "갈림길 역", "weeks": "3주차", "topics": "벡터, 조건 연산자, bufif1, MUX, 계층 모듈", "ready": false },
+    { "id": 3, "name": "전광판 광장", "weeks": "4주차 전반", "topics": "priority encoder, case·casez, 7-세그먼트 디코더", "ready": false },
+    { "id": 4, "name": "덧셈 농장", "weeks": "4주차 후반~5주차 전반", "topics": "half·full adder, RCA, generate for, 지연 분석", "ready": false },
+    { "id": 5, "name": "봉화 언덕", "weeks": "5주차 후반~7주차", "topics": "CLA, prefix adder, carry generator", "ready": false },
+    { "id": 6, "name": "거울 동굴", "weeks": "8주차", "topics": "2의 보수, 가감산기, overflow, reg signed", "ready": false }
+  ]
+}

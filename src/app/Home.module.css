@@ -1,0 +1,329 @@
+.page {
+  min-height: 100dvh;
+  background: linear-gradient(180deg, var(--sky-top) 0, var(--bg) 640px);
+}
+
+.main {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 12px clamp(20px, 4vw, 56px) var(--space-section);
+}
+
+/* 폭에 따라 미디어 쿼리 없이 접힌다 (5.3) */
+.hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 24px 40px;
+}
+
+.left {
+  flex: 1 1 460px;
+  max-width: 540px;
+  display: grid;
+  gap: 24px;
+}
+
+.titleBlock {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+}
+
+.title {
+  margin: 4px 0 0;
+  font-size: clamp(42px, 4.2vw, 60px);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+}
+
+.kw {
+  color: var(--accent);
+}
+
+.tagline {
+  margin: 0;
+  font-size: clamp(21px, 2vw, 26px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.lede {
+  margin: 0;
+  color: var(--muted);
+  font-size: 16px;
+}
+
+/* 이어서 하기 카드 */
+.continue {
+  display: grid;
+  gap: 12px;
+}
+
+.continueHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.eyebrow {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.continueTitle {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.code {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--code-bg);
+  color: var(--code-text);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.7;
+  overflow-x: auto;
+}
+
+.codeLine {
+  white-space: pre;
+}
+
+.blank {
+  padding: 1px 6px;
+  border: 1.5px dashed var(--accent);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.count {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-gap);
+}
+
+.actions > * {
+  flex: 1 1 180px;
+}
+
+/* 섬 지도 */
+.island {
+  position: relative;
+  flex: 1 1 520px;
+  min-width: 0;
+  margin: 0;
+}
+
+.islandSvg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.islandSvg :global(.here) {
+  animation: bob 1.6s ease-in-out infinite;
+}
+
+.islandSvg :global(.zonePin) {
+  transition: transform var(--dur-ui) var(--ease-ui);
+}
+
+@keyframes bob {
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.pinHit {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
+  border-radius: var(--radius-pill);
+}
+
+.pinHit:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.pinTag {
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 50%;
+  transform: translate(-50%, 4px);
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity var(--dur-ui) var(--ease-ui),
+    transform var(--dur-ui) var(--ease-ui);
+}
+
+.pinHit:hover .pinTag,
+.pinHit:focus-visible .pinTag {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.pinOff {
+  cursor: default;
+}
+
+/* 섹션 */
+.section {
+  margin-top: var(--space-section);
+}
+
+.sectionTitle {
+  margin: 0 0 var(--space-gap);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.sectionLede {
+  margin: -6px 0 var(--space-gap);
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.values {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+  gap: var(--space-gap);
+}
+
+
+.valueCard {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.sprite {
+  flex: none;
+  width: 72px;
+  height: auto;
+}
+
+.valueName {
+  margin: 4px 0 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.valueNote {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.zones {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: var(--space-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.zone {
+  padding: 0;
+}
+
+.zoneLink,
+.zone > div {
+  display: grid;
+  gap: 8px;
+  height: 100%;
+  padding: var(--space-card);
+  border-radius: var(--radius-card);
+  color: inherit;
+  text-decoration: none;
+  transition: transform var(--dur-ui) var(--ease-ui);
+}
+
+.zoneLink:hover {
+  transform: translateY(-4px);
+}
+
+.zoneLink:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.zoneHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.zoneWeeks {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.zoneName {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.zoneTopics {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.zoneOff {
+  opacity: 0.72;
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 24px clamp(20px, 4vw, 56px) 40px;
+  color: var(--muted);
+  font-size: 13px;
+  border-top: 1px solid var(--hairline);
+}
+
+.footer a {
+  color: var(--accent-text);
+}

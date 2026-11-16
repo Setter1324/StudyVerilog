@@ -1,0 +1,34 @@
+.list {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.tab {
+  min-height: var(--icon-button);
+  padding: 0 14px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color var(--dur-ui) var(--ease-ui);
+}
+
+.tab:hover {
+  color: var(--text);
+}
+
+.tab:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: 6px 6px 0 0;
+}
+
+.selected {
+  color: var(--accent-text);
+  border-bottom-color: var(--accent);
+}

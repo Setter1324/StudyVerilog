@@ -1,0 +1,150 @@
+import { useState } from 'react';
+import {
+  Button,
+  Card,
+  Chip,
+  CodeBlank,
+  IconButton,
+  LockedLine,
+  ProgressBar,
+  Sheet,
+  Tabs,
+  ValueBadge,
+  ZonePin,
+  type SignalValue,
+  type ZoneId,
+} from '../ui';
+import s from './UiGallery.module.css';
+
+const VALUES: SignalValue[] = ['1', '0', 'x', 'z'];
+const ZONES: ZoneId[] = [1, 2, 3, 4, 5, 6];
+
+/** 컴포넌트 보기 (#/ui). 최종계획서 7.7의 11개를 한 화면에 모은다. */
+export function UiGallery() {
+  const [tab, setTab] = useState('design.sv');
+  const [blank, setBlank] = useState('');
+  const [sound, setSound] = useState(false);
+  const [sheet, setSheet] = useState(false);
+
+  return (
+    <main className={s.page}>
+      <h1 className={s.h1}>컴포넌트</h1>
+      <p className={s.muted}>최종계획서 7.7의 컴포넌트 11개. 메뉴에는 없는 개발용 화면이에요.</p>
+
+      <section className={s.section}>
+        <h2 className={s.h2}>Button · IconButton</h2>
+        <div className={s.row}>
+          <Button>이어서 하기</Button>
+          <Button variant="secondary">스테이지 고르기</Button>
+          <Button disabled>실행 중</Button>
+          <IconButton label="소리" pressed={sound} onClick={() => setSound(!sound)}>
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M3 8h3l4-3v10l-4-3H3Z" fill="currentColor" />
+              {sound && <path d="M13 7a4 4 0 0 1 0 6" fill="none" stroke="currentColor" strokeWidth="1.6" />}
+            </svg>
+          </IconButton>
+          <IconButton label="힌트">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <circle cx="10" cy="8" r="5" fill="none" stroke="currentColor" strokeWidth="1.6" />
+              <path d="M8 15h4M8.5 17.5h3" stroke="currentColor" strokeWidth="1.6" />
+            </svg>
+          </IconButton>
+        </div>
+      </section>
+
+      <section className={s.section}>
+        <h2 className={s.h2}>Chip · ZonePin · ProgressBar</h2>
+        <div className={s.row}>
+          <Chip variant="subject">VERILOG · 1~8주차</Chip>
+          <Chip>예측</Chip>
+          <Chip>빈칸</Chip>
+          <Chip variant="status">준비 중</Chip>
+        </div>
+        <div className={s.row}>
+          {ZONES.map((z) => (
+            <ZonePin key={z} zone={z} label={`구역 ${z}`} dimmed={z > 1} />
+          ))}
+        </div>
+        <ProgressBar value={4} max={15} label="게이트 마을 진행" />
+      </section>
+
+      <section className={s.section}>
+        <h2 className={s.h2}>Card · ValueBadge</h2>
+        <div className={s.grid}>
+          {VALUES.map((v) => (
+            <Card key={v}>
+              <ValueBadge value={v} showName />
+            </Card>
+          ))}
+        </div>
+        <div className={s.grid}>
+          <Card variant="hero">
+            <Chip>빈칸</Chip>
+            <h3 className={s.h3}>1-4 게이트 지연</h3>
+            <p className={s.muted}>hero: &quot;이어서 하기&quot; 카드</p>
+          </Card>
+          <Card variant="highlight">
+            <ZonePin zone={1} label="게이트 마을" />
+            <h3 className={s.h3}>게이트 마을</h3>
+            <p className={s.muted}>highlight: 지금 구역</p>
+          </Card>
+        </div>
+      </section>
+
+      <section className={s.section}>
+        <h2 className={s.h2}>Tabs · CodeBlank · LockedLine</h2>
+        <Tabs
+          label="파일"
+          idPrefix="gallery"
+          items={[
+            { id: 'design.sv', label: 'design.sv' },
+            { id: 'testbench.sv', label: 'testbench.sv' },
+          ]}
+          value={tab}
+          onChange={setTab}
+        />
+        <div className={s.code} role="tabpanel" id={`gallery-${tab}`} aria-labelledby={`gallery-tab-${tab}`}>
+          <LockedLine line={1}>module test;</LockedLine>
+          <LockedLine line={2}>  or #3 (w1, A, B);</LockedLine>
+          <div className={s.codeLine}>
+            <span className={s.no}>3</span>
+            <code>
+              {'  and '}
+              <CodeBlank
+                label="빈칸 1: AND 건물을 지나는 데 걸리는 시간"
+                placeholder="?"
+                value={blank}
+                onChange={(e) => setBlank(e.target.value)}
+                wrong={blank !== '' && blank !== '#2'}
+              />
+              {' (E, w1, C);'}
+            </code>
+          </div>
+          <LockedLine line={4}>endmodule</LockedLine>
+        </div>
+      </section>
+
+      <section className={s.section}>
+        <h2 className={s.h2}>Sheet</h2>
+        <Button variant="secondary" onClick={() => setSheet(true)}>
+          결과 판 열기
+        </Button>
+        <Sheet
+          open={sheet}
+          title="맞았어요"
+          onClose={() => setSheet(false)}
+          actions={
+            <>
+              <Button variant="secondary" onClick={() => setSheet(false)}>
+                다시 보기
+              </Button>
+              <Button onClick={() => setSheet(false)}>다음 스테이지</Button>
+            </>
+          }
+        >
+          <p>t=15에 E가 1이 됐어요. AND 건물을 지나는 데 2틱이 걸려요.</p>
+        </Sheet>
+      </section>
+    </main>
+  );
+}
