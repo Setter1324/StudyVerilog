@@ -13,7 +13,15 @@ const load = async (name) =>
 const mods = { ivlpp: await load('ivlpp'), ivl: await load('ivl'), vvp: await load('vvp') };
 
 await mkdir(outDir, { recursive: true });
-await writeFile(path.join(outDir, 'VERSION'), 'VeriSim wasm (Icarus Verilog 14.0 devel, c7530db)\n');
+const built = existsSync(path.join(engineDir, 'IVERILOG_COMMIT'))
+  ? (await readFile(path.join(engineDir, 'IVERILOG_COMMIT'), 'utf8')).trim()
+  : '';
+await writeFile(
+  path.join(outDir, 'VERSION'),
+  built
+    ? `직접 빌드한 wasm (Icarus Verilog ${built.slice(0, 7)}, engine/build)\n`
+    : 'VeriSim wasm (Icarus Verilog 14.0 devel, c7530db)\n',
+);
 
 const cases = (await readdir(goldenDir, { withFileTypes: true }))
   .filter((d) => d.isDirectory() && /^\d/.test(d.name))
