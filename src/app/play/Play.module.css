@@ -1,0 +1,352 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+/* 상단 바 56px (6.1) */
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 6px clamp(12px, 2vw, 24px);
+  border-bottom: 1px solid var(--hairline);
+  background: var(--surface);
+}
+
+.back {
+  display: inline-grid;
+  place-items: center;
+  width: var(--icon-button);
+  height: var(--icon-button);
+  border-radius: var(--radius-pill);
+  color: var(--text);
+  font-size: 26px;
+  text-decoration: none;
+}
+
+.back:hover {
+  background: var(--surface-soft);
+}
+
+.back:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.titleBox {
+  display: grid;
+  min-width: 0;
+  margin-right: auto;
+}
+
+.crumb {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.title {
+  margin: 0;
+  overflow: hidden;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.barTools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.run {
+  min-width: 96px;
+}
+
+/* 넓은 화면: 월드 55% · 에디터 45%, 아래에 파형 · 콘솔. 좁으면 월드, 에디터, 콘솔, 파형 순서로 쌓인다 */
+.grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 55fr) minmax(0, 45fr);
+  grid-template-areas:
+    'world editor'
+    'wave console';
+  gap: 1px;
+  background: var(--hairline);
+}
+
+@media (max-width: 1099px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'world'
+      'editor'
+      'console'
+      'wave';
+  }
+}
+
+.worldPane,
+.editorPane,
+.wavePane,
+.consolePane {
+  min-width: 0;
+  background: var(--bg);
+}
+
+.worldPane {
+  grid-area: world;
+  display: flex;
+  flex-direction: column;
+}
+
+.editorPane {
+  grid-area: editor;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  background: var(--surface);
+}
+
+.wavePane {
+  grid-area: wave;
+  padding: 12px 16px;
+  background: var(--surface);
+}
+
+.consolePane {
+  grid-area: console;
+  background: var(--code-bg);
+}
+
+/* 월드 */
+.world {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  background: linear-gradient(180deg, var(--sky-top), var(--bg));
+  transition: background var(--dur-ui) var(--ease-ui);
+}
+
+.dusk {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--sky-top), var(--world-flame) 30%), var(--bg));
+}
+
+.worldSvg {
+  width: 100%;
+  max-height: 46vh;
+}
+
+.transport {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--hairline);
+  background: var(--surface);
+}
+
+.tbtn {
+  width: var(--icon-button);
+  height: var(--icon-button);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.tbtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.tbtn:focus-visible,
+.speed:focus-visible,
+.speedOn:focus-visible,
+.skip:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.slider {
+  flex: 1 1 160px;
+  accent-color: var(--accent);
+}
+
+.time {
+  min-width: 4.5em;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.speeds {
+  display: flex;
+  gap: 2px;
+}
+
+.speed,
+.speedOn {
+  min-width: 44px;
+  min-height: 36px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.speedOn {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+.skip {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: none;
+  color: var(--accent-text);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* 에디터 */
+.intro {
+  padding: 12px 14px;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  background: var(--surface-soft);
+}
+
+.intro summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.intro p {
+  margin: 8px 0 0;
+  font-size: 15px;
+}
+
+.draft {
+  color: var(--muted);
+  font-size: 12px !important;
+}
+
+.hints {
+  margin: 0;
+  padding: 10px 14px 10px 34px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--text);
+  font-size: 14px;
+}
+
+.fileName {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-text);
+  border-bottom: 2px solid var(--accent);
+  align-self: flex-start;
+  padding: 4px 2px;
+}
+
+.editor {
+  padding: 6px 0;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 10px 2px 10px;
+}
+
+.no {
+  min-width: 2ch;
+  color: var(--muted);
+  opacity: 0.7;
+  text-align: right;
+}
+
+.code {
+  margin-left: 20px;
+  font: inherit;
+  white-space: pre;
+}
+
+.errLine {
+  box-shadow: inset 3px 0 0 var(--danger);
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+}
+
+.editorActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.kbd {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* 콘솔 */
+.console {
+  margin: 0;
+  padding: 14px 16px;
+  min-height: 160px;
+  max-height: 32vh;
+  overflow: auto;
+  color: var(--code-text);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.consoleErr {
+  color: color-mix(in srgb, var(--danger), var(--code-text) 35%);
+}
+
+.logOn {
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+  border-radius: 4px;
+}
+
+.missing {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 40px clamp(20px, 4vw, 56px);
+}
+
+.missingActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
