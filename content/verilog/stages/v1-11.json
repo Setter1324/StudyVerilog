@@ -1,0 +1,158 @@
+{
+  "id": "v1-11",
+  "draft": "문구와 정답은 초안이다. 강의자료 기준으로 주찬이 확인한다(최종계획서 14.4).",
+  "type": "timing",
+  "top": "test",
+  "intro": "XOR 건물은 3틱, AND 건물은 2틱이 걸려요. A가 바뀐 뒤 Y가 바뀌기까지 가장 오래 걸리는 시간(t_pd)을 적어요.",
+  "files": {
+    "testbench.sv": {
+      "template": "module test;\n  reg A, B, C;\n  wire w, Y;\n\n  xor #3 (w, A, B);\n  and #2 (Y, w, C);\n\n  initial begin\n    $monitor(\"%3t: A=%b B=%b C=%b w=%b Y=%b\", $time, A, B, C, w, Y);\n    A = 0; B = 0; C = 1;\n    #10 A = 1;\n    #10 $finish;\n  end\nendmodule\n"
+    }
+  },
+  "question": {
+    "kind": "number",
+    "prompt": "t_pd는 몇 틱?",
+    "answer": 5,
+    "unit": "틱"
+  },
+  "hints": [
+    "t_pd는 입력에서 출력까지 가장 늦게 도착하는 길의 시간이에요.",
+    "A에서 Y까지는 XOR와 AND를 차례로 지나요.",
+    "두 건물의 지연을 더해요. 실행해서 t=10 뒤 Y가 언제 바뀌는지도 봐요."
+  ],
+  "scene": {
+    "cols": 9,
+    "rows": 5,
+    "gates": [
+      {
+        "id": "xor",
+        "label": "XOR #3",
+        "at": [
+          2,
+          1
+        ],
+        "roof": "teal"
+      },
+      {
+        "id": "and",
+        "label": "AND #2",
+        "at": [
+          5,
+          2
+        ],
+        "roof": "blue"
+      }
+    ],
+    "roads": [
+      {
+        "signal": "A",
+        "cells": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ]
+      },
+      {
+        "signal": "B",
+        "cells": [
+          [
+            0,
+            2
+          ],
+          [
+            1,
+            2
+          ],
+          [
+            2,
+            2
+          ]
+        ]
+      },
+      {
+        "signal": "w",
+        "cells": [
+          [
+            3,
+            1
+          ],
+          [
+            4,
+            1
+          ],
+          [
+            4,
+            2
+          ]
+        ]
+      },
+      {
+        "signal": "C",
+        "cells": [
+          [
+            3,
+            4
+          ],
+          [
+            4,
+            4
+          ],
+          [
+            5,
+            4
+          ],
+          [
+            5,
+            3
+          ]
+        ]
+      },
+      {
+        "signal": "Y",
+        "cells": [
+          [
+            6,
+            2
+          ],
+          [
+            7,
+            2
+          ],
+          [
+            8,
+            2
+          ]
+        ]
+      }
+    ]
+  },
+  "bind": {
+    "A": "test.A",
+    "B": "test.B",
+    "C": "test.C",
+    "w": "test.w",
+    "Y": "test.Y"
+  },
+  "check": [
+    {
+      "kind": "signalAt",
+      "signal": "Y",
+      "time": 14,
+      "value": "0"
+    },
+    {
+      "kind": "signalAt",
+      "signal": "Y",
+      "time": 15,
+      "value": "1"
+    }
+  ],
+  "solution": {
+    "answer": "5"
+  }
+}

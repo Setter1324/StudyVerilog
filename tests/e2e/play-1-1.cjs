@@ -47,6 +47,33 @@ const { chromium } = require(process.env.PW_PATH || 'playwright');
       console.log('console:', (await page.locator('pre').last().innerText()).slice(0, 400));
       await page.screenshot({ path: 'shots/play-error.png' });
     });
+    await step('predict 1-2', async () => {
+      await page.goto(base + '#/play/v1-02');
+      await page.getByRole('radio', { name: '0' }).check();
+      await page.getByRole('button', { name: '실행', exact: true }).click();
+      await page.getByRole('button', { name: '끝으로' }).click({ timeout: 30000 });
+      await page.getByRole('dialog').waitFor({ timeout: 10000 });
+      console.log('dialog:', (await page.getByRole('dialog').innerText()).replace(/\n+/g, ' | '));
+      await page.screenshot({ path: 'shots/play-predict.png' });
+    });
+    await step('design 1-12', async () => {
+      await page.goto(base + '#/play/v1-12');
+      await page.getByLabel('design.sv').fill('module circuit(input A, input B, input C, output Y);\n  assign Y = (A & B) | ~C;\nendmodule\n');
+      await page.getByRole('button', { name: '실행', exact: true }).click();
+      await page.getByRole('button', { name: '끝으로' }).click({ timeout: 30000 });
+      await page.getByRole('dialog').waitFor({ timeout: 10000 });
+      console.log('dialog:', (await page.getByRole('dialog').innerText()).replace(/\n+/g, ' | '));
+      await page.screenshot({ path: 'shots/play-design.png' });
+    });
+    await step('timing 1-11', async () => {
+      await page.goto(base + '#/play/v1-11');
+      await page.getByRole('spinbutton').fill('5');
+      await page.getByRole('button', { name: '실행', exact: true }).click();
+      await page.getByRole('button', { name: '끝으로' }).click({ timeout: 30000 });
+      await page.getByRole('dialog').waitFor({ timeout: 10000 });
+      console.log('dialog:', (await page.getByRole('dialog').innerText()).replace(/\n+/g, ' | '));
+      await page.screenshot({ path: 'shots/play-timing.png' });
+    });
     console.log('E2E PASS');
   } catch (e) {
     console.log('E2E FAIL', e.message);

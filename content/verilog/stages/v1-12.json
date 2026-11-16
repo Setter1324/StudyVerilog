@@ -1,0 +1,174 @@
+{
+  "id": "v1-12",
+  "draft": "문구와 정답은 초안이다. 강의자료 기준으로 주찬이 확인한다(최종계획서 14.4). 원래 1-12는 강의자료 18쪽의 회로도를 보고 설계하는 문제다. 회로도가 들어오기 전까지 같은 형식의 대신 문제를 둔다.",
+  "type": "design",
+  "top": "test",
+  "intro": "design.sv의 circuit 모듈을 채워 Y = (A & B) | ~C가 되게 해요. 숨은 테스트벤치가 000부터 111까지 모든 입력을 넣어 봐요.",
+  "files": {
+    "design.sv": {
+      "template": "module circuit(input A, input B, input C, output Y);\n  // 게이트 프리미티브나 assign으로 Y를 만들어요\n\nendmodule\n"
+    }
+  },
+  "hidden": {
+    "testbench.sv": "module test;\n  reg A, B, C;\n  wire Y;\n\n  circuit dut(.A(A), .B(B), .C(C), .Y(Y));\n\n  initial begin\n    $monitor(\"%3t: A=%b B=%b C=%b Y=%b\", $time, A, B, C, Y);\n    {A, B, C} = 3'b000;\n    repeat (7) #10 {A, B, C} = {A, B, C} + 1;\n    #10 $finish;\n  end\nendmodule\n"
+  },
+  "hints": [
+    "A & B와 ~C를 먼저 만들고, 둘을 OR로 묶어요.",
+    "중간 값은 wire로 선언해요: wire ab, nc;",
+    "and (ab, A, B); not (nc, C); or (Y, ab, nc); 처럼 써요."
+  ],
+  "scene": {
+    "cols": 9,
+    "rows": 6,
+    "gates": [
+      {
+        "id": "and",
+        "label": "AND",
+        "at": [
+          2,
+          1
+        ],
+        "roof": "teal"
+      },
+      {
+        "id": "not",
+        "label": "NOT",
+        "at": [
+          2,
+          4
+        ],
+        "roof": "teal"
+      },
+      {
+        "id": "or",
+        "label": "OR",
+        "at": [
+          5,
+          2
+        ],
+        "roof": "blue"
+      }
+    ],
+    "roads": [
+      {
+        "signal": "A",
+        "cells": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ]
+      },
+      {
+        "signal": "B",
+        "cells": [
+          [
+            0,
+            2
+          ],
+          [
+            1,
+            2
+          ],
+          [
+            2,
+            2
+          ]
+        ]
+      },
+      {
+        "signal": "C",
+        "cells": [
+          [
+            0,
+            4
+          ],
+          [
+            1,
+            4
+          ]
+        ]
+      },
+      {
+        "signal": "Y",
+        "cells": [
+          [
+            6,
+            2
+          ],
+          [
+            7,
+            2
+          ],
+          [
+            8,
+            2
+          ]
+        ]
+      }
+    ]
+  },
+  "bind": {
+    "A": "test.A",
+    "B": "test.B",
+    "C": "test.C",
+    "Y": "test.Y"
+  },
+  "check": [
+    {
+      "kind": "signalAt",
+      "signal": "Y",
+      "time": 0,
+      "value": "1"
+    },
+    {
+      "kind": "signalAt",
+      "signal": "Y",
+      "time": 10,
+      "value": "0"
+    },
+    {
+      "kind": "signalAt",
+      "signal": "Y",
+      "time": 20,
+      "value": "1"
+    },
+    {
+      "kind": "signalAt",
+      "signal": "Y",
+      "time": 30,
+      "value": "0"
+    },
+    {
+      "kind": "signalAt",
+      "signal": "Y",
+      "time": 40,
+      "value": "1"
+    },
+    {
+      "kind": "signalAt",
+      "signal": "Y",
+      "time": 50,
+      "value": "0"
+    },
+    {
+      "kind": "signalAt",
+      "signal": "Y",
+      "time": 60,
+      "value": "1"
+    },
+    {
+      "kind": "signalAt",
+      "signal": "Y",
+      "time": 70,
+      "value": "1"
+    }
+  ],
+  "solution": {
+    "file:design.sv": "module circuit(input A, input B, input C, output Y);\n  wire ab, nc;\n  and (ab, A, B);\n  not (nc, C);\n  or (Y, ab, nc);\nendmodule\n"
+  }
+}

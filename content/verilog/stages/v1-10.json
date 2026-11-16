@@ -1,0 +1,114 @@
+{
+  "id": "v1-10",
+  "draft": "문구와 정답은 초안이다. 강의자료 기준으로 주찬이 확인한다(최종계획서 14.4).",
+  "type": "convert",
+  "top": "test",
+  "intro": "forever로 만든 클록을 repeat로 바꿔 써요. t=40에 끝날 때까지 파형이 같아야 해요.",
+  "files": {
+    "testbench.sv": {
+      "template": "module test;\n  reg clk;\n\n  initial begin\n    $monitor(\"%3t: clk=%b\", $time, clk);\n    clk = 0;\n    forever #5 clk = ~clk;\n  end\n\n  initial #40 $finish;\nendmodule\n"
+    }
+  },
+  "hints": [
+    "forever는 끝없이 돌고, repeat (n)은 n번만 돌아요.",
+    "t=0부터 t=40 사이에 #5마다 몇 번 뒤집히는지 세어 봐요.",
+    "repeat (8) #5 clk = ~clk; 꼴이에요."
+  ],
+  "scene": {
+    "cols": 8,
+    "rows": 3,
+    "gates": [
+      {
+        "id": "wheel",
+        "label": "#5",
+        "at": [
+          1,
+          1
+        ],
+        "roof": "gray"
+      }
+    ],
+    "roads": [
+      {
+        "signal": "clk",
+        "cells": [
+          [
+            2,
+            1
+          ],
+          [
+            3,
+            1
+          ],
+          [
+            4,
+            1
+          ],
+          [
+            5,
+            1
+          ],
+          [
+            6,
+            1
+          ]
+        ]
+      }
+    ],
+    "houses": [
+      {
+        "signal": "clk",
+        "at": [
+          7,
+          1
+        ]
+      }
+    ]
+  },
+  "bind": {
+    "clk": "test.clk"
+  },
+  "check": [
+    {
+      "kind": "signalAt",
+      "signal": "clk",
+      "time": 5,
+      "value": "1"
+    },
+    {
+      "kind": "signalAt",
+      "signal": "clk",
+      "time": 10,
+      "value": "0"
+    },
+    {
+      "kind": "signalAt",
+      "signal": "clk",
+      "time": 30,
+      "value": "0"
+    },
+    {
+      "kind": "signalAt",
+      "signal": "clk",
+      "time": 35,
+      "value": "1"
+    },
+    {
+      "kind": "end",
+      "time": 40
+    },
+    {
+      "kind": "sourceLacks",
+      "pattern": "\\bforever\\b",
+      "message": "forever가 아직 남아 있어요"
+    },
+    {
+      "kind": "sourceHas",
+      "pattern": "\\brepeat\\s*\\(",
+      "message": "repeat를 써서 바꿔요"
+    }
+  ],
+  "solution": {
+    "file:testbench.sv": "module test;\n  reg clk;\n\n  initial begin\n    $monitor(\"%3t: clk=%b\", $time, clk);\n    clk = 0;\n    repeat (8) #5 clk = ~clk;\n  end\n\n  initial #40 $finish;\nendmodule\n"
+  }
+}

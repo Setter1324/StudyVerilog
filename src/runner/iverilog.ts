@@ -134,3 +134,22 @@ export async function runIverilog(
   }
   return { ok: true, stage: 'run', compileLog, log: out.join('\n'), diagnostics, vcd };
 }
+
+/**
+ * 사용자 코드에 붙이는 모듈. 시뮬레이션 시간 상한은 감시 모듈이 건다 (9.5).
+ * 코드에 $dumpvars가 없으면 덤프 모듈을 붙여 VCD를 얻는다 (9.2).
+ * 붙지 않은 모듈은 Icarus Verilog가 최상위로 다루므로 따로 인스턴스를 만들 필요가 없다.
+ */
+export function extraModules(files: IverilogFile[], top: string, simTime: number): IverilogFile[] {
+  const all = files.map((f) => f.text).join('\n');
+  const out: IverilogFile[] = [
+    { name: '__kwss_guard.v', text: `module __kwss_guard;\n  initial #${simTime} $finish;\nendmodule\n` },
+  ];
+  if (!/\$dumpvars/.test(all)) {
+    out.push({
+      name: '__kwss_dump.v',
+      text: `module __kwss_dump;\n  initial begin\n    $dumpfile("dump.vcd");\n    $dumpvars(0, ${top});\n  end\nendmodule\n`,
+    });
+  }
+  return out;
+}
