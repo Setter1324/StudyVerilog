@@ -1,0 +1,12 @@
+{
+  "title": "초기화 안 한 reg → x",
+  "checks": [
+    { "kind": "signalAt", "signal": "test.B", "time": 0, "value": "x" },
+    { "kind": "signalAt", "signal": "test.Y", "time": 0, "value": "x" },
+    { "kind": "signalAt", "signal": "test.Q", "time": 19, "value": "x" },
+    { "kind": "signalAt", "signal": "test.Y", "time": 10, "value": "1" },
+    { "kind": "signalAt", "signal": "test.Q", "time": 20, "value": "1" },
+    { "kind": "logIncludes", "text": "  0: A=1 B=x Y=x Q=x" },
+    { "kind": "end", "time": 30 }
+  ]
+}

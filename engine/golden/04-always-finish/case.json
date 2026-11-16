@@ -1,0 +1,10 @@
+{
+  "title": "always #10과 $finish",
+  "checks": [
+    { "kind": "signalAt", "signal": "test.clk", "time": 10, "value": "1" },
+    { "kind": "signalAt", "signal": "test.clk", "time": 20, "value": "0" },
+    { "kind": "signalAt", "signal": "test.count", "time": 95, "value": "0101" },
+    { "kind": "logIncludes", "text": "$finish called at 95" },
+    { "kind": "end", "time": 95 }
+  ]
+}

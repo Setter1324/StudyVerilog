@@ -1,0 +1,13 @@
+{
+  "title": "게이트 지연 or #3, and #2",
+  "checks": [
+    { "kind": "signalAt", "signal": "test.w1", "time": 2, "value": "x" },
+    { "kind": "signalAt", "signal": "test.w1", "time": 3, "value": "0" },
+    { "kind": "signalAt", "signal": "test.E", "time": 4, "value": "x" },
+    { "kind": "signalAt", "signal": "test.E", "time": 5, "value": "0" },
+    { "kind": "signalAt", "signal": "test.w1", "time": 13, "value": "1" },
+    { "kind": "signalAt", "signal": "test.E", "time": 14, "value": "0" },
+    { "kind": "signalAt", "signal": "test.E", "time": 15, "value": "1" },
+    { "kind": "end", "time": 20 }
+  ]
+}

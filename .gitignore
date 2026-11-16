@@ -7,3 +7,7 @@ out
 
 # 강의자료 PDF와 캡처는 저장소에 넣지 않는다 (최종계획서 11.2, 15.1)
 lecture/
+
+# 엔진 파일과 골든 테스트 결과 (CI에서 만든다)
+engine/.cache/
+engine/.out/

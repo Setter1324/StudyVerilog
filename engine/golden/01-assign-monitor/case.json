@@ -1,0 +1,10 @@
+{
+  "title": "assign OR·AND와 $monitor(%3t)",
+  "checks": [
+    { "kind": "signalAt", "signal": "test.D", "time": 10, "value": "1" },
+    { "kind": "signalAt", "signal": "test.E", "time": 19, "value": "0" },
+    { "kind": "signalAt", "signal": "test.E", "time": 20, "value": "1" },
+    { "kind": "logIncludes", "text": " 20: A=1 B=0 C=1 D=1 E=1" },
+    { "kind": "end", "time": 40 }
+  ]
+}

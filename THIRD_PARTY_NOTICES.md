@@ -7,5 +7,6 @@
 | React | MIT | https://github.com/facebook/react | 화면 |
 | Vite | MIT | https://github.com/vitejs/vite | 빌드 |
 | Zustand | MIT | https://github.com/pmndrs/zustand | 상태 |
+| Icarus Verilog (VeriSim의 wasm 빌드) | GPL-2.0-or-later / GPL-2.0 | https://github.com/steveicarus/iverilog, https://github.com/senolgulgonul/verisim | 엔진 검증(CI에서만 받는다). `engine/COPYING`, `engine/verisim.lock.json` |
 
 엔진(Icarus Verilog, GPL-2.0-or-later)과 글꼴(Pretendard, JetBrains Mono, D2Coding: OFL-1.1)은 저장소에 들어올 때 라이선스 파일과 함께 추가한다.

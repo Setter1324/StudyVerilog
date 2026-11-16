@@ -1,0 +1,10 @@
+{
+  "title": "$dumpfile과 $dumpvars(1)",
+  "checks": [
+    { "kind": "hasSignal", "signal": "test.S" },
+    { "kind": "noSignal", "signal": "test.ha.S" },
+    { "kind": "signalAt", "signal": "test.S", "time": 10, "value": "1" },
+    { "kind": "signalAt", "signal": "test.C", "time": 30, "value": "1" },
+    { "kind": "end", "time": 40 }
+  ]
+}
