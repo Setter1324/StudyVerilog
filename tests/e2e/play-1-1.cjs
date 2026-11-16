@@ -89,6 +89,13 @@ const { chromium } = require(process.env.PW_PATH || 'playwright');
       await page.getByRole('radio', { name: '0', exact: true }).check();
       await page.getByRole('button', { name: '실행', exact: true }).click();
       if (!(await result('play-1-4')).includes('맞았어요')) throw new Error('1-4 정답인데 맞았어요가 아니다');
+      // t=11: A가 t=10에 바뀌어 OR(#3)를 지나는 중이다. 칸 3개 중 2개가 찬다
+      await page.getByRole('button', { name: '다시 보기' }).click();
+      await page.getByRole('slider', { name: '시간' }).fill('11');
+      const world = page.getByRole('img', { name: /3틱 중 2틱째/ });
+      await world.waitFor({ timeout: 5000 });
+      console.log('world at t=11:', await world.getAttribute('aria-label'));
+      await page.screenshot({ path: 'shots/play-1-4-t11.png' });
     });
     await step('no $finish 1-9', async () => {
       await page.goto(base + '#/play/v1-09');
