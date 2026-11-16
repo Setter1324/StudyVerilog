@@ -8,7 +8,9 @@ import { buildTimeline, valueAt } from '../../sim/vcd';
 import { STAGES, stageById, stageData, stagesOf, TYPE_NAMES, zoneById, type StageData } from '../../state/content';
 import { useProgress } from '../../state/progress';
 import { Button, Chip, CodeBlank, IconButton, LockedLine, Sheet, Tabs, ZonePin } from '../../ui';
-import { buildCircuit } from '../../world/circuit';
+import { sfx } from '../../audio/sfx';
+import { buildCircuit, circuitWalkers } from '../../world/circuit';
+import { Walkers } from '../../world/Walkers';
 import { IsoSvg } from '../../world/IsoSvg';
 import { TopBar } from '../TopBar';
 import s from './Play.module.css';
@@ -87,6 +89,7 @@ function World({ data, timeline, t, highlight }: { data: StageData; timeline: Ti
     values[short] = timeline ? valueAt(timeline.signals[full], t) : 'x';
   }
   const scene = buildCircuit(data.scene, values, highlight);
+  const walkers = circuitWalkers(data.scene, values);
   const dusk = timeline !== null && t >= timeline.end;
   return (
     <div className={dusk ? `${s.world} ${s.dusk}` : s.world}>
@@ -96,7 +99,9 @@ function World({ data, timeline, t, highlight }: { data: StageData; timeline: Ti
         title={`t=${t}의 마을. ${Object.entries(values)
           .map(([k, v]) => `${k}=${v}`)
           .join(', ')}`}
-      />
+      >
+        <Walkers paths={walkers} />
+      </IsoSvg>
     </div>
   );
 }
@@ -109,6 +114,8 @@ export function Play({ id }: { id: string }) {
   const done = useProgress((p) => p.done);
   const drafts = useProgress((p) => p.drafts);
   const setDraft = useProgress((p) => p.setDraft);
+  const sound = useProgress((p) => p.sound);
+  const setSound = useProgress((p) => p.setSound);
 
   const fileNames = data ? Object.keys(data.files) : [];
   const [tab, setTab] = useState(fileNames[0] ?? '');
@@ -130,14 +137,58 @@ export function Play({ id }: { id: string }) {
     runner.warmUp();
   }, [meta, open]);
 
-  // 재생: 1틱 600ms. 끝 시각에 해가 지고 결과 판이 뜬다 (6.2)
+  // 재생: 1틱 600ms. 아무 값도 바뀌지 않는 틱은 4배 빨리 지나간다. 끝 시각에 해가 지고 결과 판이 뜬다 (6.2)
   const end = timeline?.end ?? 0;
   const isPlaying = playing && timeline !== null && t < end;
+  /** 값이 바뀌는 시각들 (이전·다음 변화로 건너뛰기, 효과음) */
+  const events = useMemo(() => {
+    if (!timeline || !data) return [] as number[];
+    const set = new Set<number>([0, timeline.end]);
+    for (const full of Object.values(data.bind)) for (const [ct] of timeline.signals[full]?.changes ?? []) set.add(ct);
+    return [...set].filter((x) => x <= timeline.end).sort((a, b) => a - b);
+  }, [timeline, data]);
+  /** 시각 at에 바뀐 값에 맞는 소리 */
+  const cue = useCallback(
+    (at: number) => {
+    if (!timeline || !data) return;
+    if (at >= timeline.end) {
+      if (verdict?.pass) sfx.pass();
+      else sfx.fail();
+      return;
+    }
+    let up = false;
+    let fog = false;
+    for (const full of Object.values(data.bind)) {
+      const ch = timeline.signals[full]?.changes.find(([ct]) => ct === at);
+      if (!ch) continue;
+      if (ch[1].includes('x')) fog = true;
+      if (ch[1].includes('1')) up = true;
+    }
+    if (fog) sfx.fog();
+    else sfx.step(up);
+    },
+    [timeline, data, verdict],
+  );
   useEffect(() => {
-    if (!isPlaying) return;
-    const h = setTimeout(() => setT((cur) => Math.min(cur + 1, end)), TICK_MS / speed);
+    if (!isPlaying || !timeline || !data) return;
+    const next = t + 1;
+    const busy = events.includes(next);
+    const h = setTimeout(
+      () => {
+        setT(Math.min(next, end));
+        if (busy) cue(next);
+      },
+      (busy ? TICK_MS : TICK_MS / 4) / speed,
+    );
     return () => clearTimeout(h);
-  }, [isPlaying, t, end, speed]);
+  }, [isPlaying, t, end, speed, events, cue, timeline, data]);
+  const jump = (to: number) => {
+    setPlaying(false);
+    setT(Math.max(0, Math.min(end, to)));
+    if (to >= end) cue(end);
+  };
+  const prevEvent = () => jump([...events].reverse().find((x) => x < t) ?? 0);
+  const nextEvent = () => jump(events.find((x) => x > t) ?? end);
   const sheet = verdict !== null && timeline !== null && t >= end && !dismissed;
 
   const run = useCallback(async () => {
@@ -147,6 +198,7 @@ export function Play({ id }: { id: string }) {
       return;
     }
     setRunning(true);
+    sfx.run();
     setError(null);
     setPlaying(false);
     setDismissed(true);
@@ -157,6 +209,7 @@ export function Play({ id }: { id: string }) {
         setTimeline(null);
         setVerdict(null);
         setT(0);
+        sfx.error();
         return;
       }
       const tl = buildTimeline(res.vcd, res.log);
@@ -249,6 +302,16 @@ export function Play({ id }: { id: string }) {
           <h1 className={s.title}>{meta.title}</h1>
         </div>
         <div className={s.barTools}>
+          <IconButton label={sound ? '소리 끄기' : '소리 켜기'} pressed={sound} onClick={() => setSound(!sound)}>
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M3 8h3l4-3v10l-4-3H3Z" fill="currentColor" />
+              {sound ? (
+                <path d="M13 7a4 4 0 0 1 0 6M15 5a7 7 0 0 1 0 10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              ) : (
+                <path d="m13 8 4 4m0-4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              )}
+            </svg>
+          </IconButton>
           <IconButton label="힌트" pressed={hints > 0} onClick={() => setHints((h) => (h >= data.hints.length ? 0 : h + 1))}>
             <svg viewBox="0 0 20 20" aria-hidden="true">
               <circle cx="10" cy="8" r="5" fill="none" stroke="currentColor" strokeWidth="1.6" />
@@ -265,18 +328,32 @@ export function Play({ id }: { id: string }) {
         <section className={s.worldPane} aria-label="월드">
           <World data={data} timeline={timeline} t={t} highlight={hover} />
           <div className={s.transport}>
-            <button
-              type="button"
-              className={s.tbtn}
-              onClick={() => {
-                if (timeline && t >= timeline.end) setT(0);
-                setPlaying(!isPlaying);
-              }}
-              disabled={!timeline}
-              aria-label={isPlaying ? '정지' : '재생'}
-            >
-              {isPlaying ? '❚❚' : '▶'}
-            </button>
+            <div className={s.tbtns}>
+              <button type="button" className={s.tbtn} onClick={() => jump(0)} disabled={!timeline} aria-label="처음으로" title="처음으로">
+                ⏮
+              </button>
+              <button type="button" className={s.tbtn} onClick={prevEvent} disabled={!timeline} aria-label="이전 변화로" title="이전 변화로">
+                ◀
+              </button>
+              <button
+                type="button"
+                className={`${s.tbtn} ${s.tplay}`}
+                onClick={() => {
+                  if (timeline && t >= timeline.end) setT(0);
+                  setPlaying(!isPlaying);
+                }}
+                disabled={!timeline}
+                aria-label={isPlaying ? '정지' : '재생'}
+              >
+                {isPlaying ? '❚❚' : '▶'}
+              </button>
+              <button type="button" className={s.tbtn} onClick={nextEvent} disabled={!timeline} aria-label="다음 변화로" title="다음 변화로">
+                ▶|
+              </button>
+              <button type="button" className={s.tbtn} onClick={() => jump(end)} disabled={!timeline} aria-label="끝으로" title="끝으로(결과 보기)">
+                ⏭
+              </button>
+            </div>
             <input
               type="range"
               className={s.slider}
@@ -298,11 +375,6 @@ export function Play({ id }: { id: string }) {
                 </button>
               ))}
             </div>
-            {timeline && t < timeline.end && (
-              <button type="button" className={s.skip} onClick={() => setT(timeline.end)}>
-                끝으로
-              </button>
-            )}
           </div>
         </section>
 

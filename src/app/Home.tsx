@@ -4,11 +4,20 @@ import { storageAvailable, useProgress } from '../state/progress';
 import { Button, Card, Chip, ProgressBar, ValueBadge, ZonePin, type SignalValue } from '../ui';
 import { buildIsland, buildValueSprite } from '../world/island';
 import { IsoSvg } from '../world/IsoSvg';
+import { Walkers } from '../world/Walkers';
+import type { WalkerKind } from '../world/walkers';
 import s from './Home.module.css';
 import { TopBar } from './TopBar';
 
 // 장면은 한 번만 계산한다
 const ISLAND = buildIsland();
+// 섬의 긴 길을 값 1·0·x를 실은 알파카들이 걷는다 (5.5). 길을 셋으로 나눠 다른 짐을 싣게 한다
+const ISLAND_WALK = (() => {
+  const w = ISLAND.walk;
+  const third = Math.ceil(w.length / 3);
+  const kinds: WalkerKind[] = ['1', '0', 'x'];
+  return kinds.map((kind, i) => ({ cells: w.slice(i * third, (i + 1) * third + 1), kind, count: 2 }));
+})();
 const VALUES: { v: SignalValue; text: string }[] = [
   { v: '1', text: '짐 실은 동물' },
   { v: '0', text: '빈손 동물' },
@@ -126,7 +135,9 @@ function IslandMap() {
         scene={ISLAND}
         className={s.islandSvg}
         title="여섯 구역이 한 길로 이어진 블록 섬. 알파카가 값을 싣고 길을 걷는다."
-      />
+      >
+        <Walkers paths={ISLAND_WALK} />
+      </IsoSvg>
       {pins.map((p) => {
         const zone = zoneById(p.zone)!;
         const style = { left: `${p.left}%`, top: `${p.top}%` };

@@ -1,0 +1,5 @@
+{
+  "note": "배경음 파일은 public/audio/에 넣고 파일 이름을 bgm에 적는다. 출처와 라이선스는 THIRD_PARTY_NOTICES.md에 적는다.",
+  "bgm": null,
+  "bgmVolume": 0.25
+}

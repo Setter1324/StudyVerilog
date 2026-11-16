@@ -1,7 +1,8 @@
-// 스테이지 장면: 길(신호), 작업장(게이트), 집(출력)을 칸에 놓고, 시각 t의 값에 따라 알파카를 세운다. (최종계획서 8.1, 9.4)
+// 스테이지 장면: 길(신호), 작업장(게이트), 집(출력)을 칸에 놓는다. 걷는 알파카는 walkers.ts가 그린다. (최종계획서 8.1, 9.4)
 // 장면은 스테이지 JSON의 scene에서 온다. 값만 시뮬레이션(타임라인)에서 가져온다.
 import { faces, Scene, type Prim, type Rendered } from './iso';
-import { alpacaBoxes, C } from './island';
+import { C } from './island';
+import type { WalkPath } from './walkers';
 
 export interface SceneSpec {
   cols: number;
@@ -89,22 +90,11 @@ export function buildCircuit(spec: SceneSpec, values: Record<string, string>, hi
     ]);
   }
 
-  // 길마다 이름표와 알파카 한 마리 (가운데 칸)
+  // 길마다 이름표
   const labels: Prim[] = [];
   for (const r of spec.roads) {
     const v = (values[r.signal] ?? 'x')[0] ?? 'x';
-    const mid = r.cells[Math.floor((r.cells.length - 1) / 2)]!;
     const first = r.cells[0]!;
-    if (v !== 'z') {
-      const x = mid[0] + 0.5;
-      const y = mid[1] + 0.5;
-      S.local(x - 0.5, y - 0.5, 0, alpacaBoxes(v === '1' ? '1' : '0'), 0);
-      if (v === 'x') {
-        const fog = S.boxPrims({ x0: x - 0.46, y0: y - 0.4, z0: 0.02, x1: x + 0.46, y1: y + 0.4, z1: 0.9, color: C.fog, opacity: 0.45, sw: 0 });
-        const [qx, qy] = S.P(x, y, 1.35);
-        S.over.push(...fog, { kind: 'text', x: f1(qx), y: f1(qy), text: '?', size: 16, fill: C.zoneMark, stroke: C.white, sw: 3 });
-      }
-    }
     const [lx, ly] = S.P(first[0] + 0.5, first[1] + 0.5, 0.15);
     labels.push({
       kind: 'group',
@@ -116,5 +106,13 @@ export function buildCircuit(spec: SceneSpec, values: Record<string, string>, hi
     });
   }
   S.over.push(...labels);
-  return S.render(16);
+  return S.render(28);
+}
+
+/** 길마다 걷는 알파카: 1은 상자, 0은 빈손, x는 안개, z는 아무도 없다 (7.2) */
+export function circuitWalkers(spec: SceneSpec, values: Record<string, string>): WalkPath[] {
+  return spec.roads.map((r) => {
+    const v = (values[r.signal] ?? 'x')[0] ?? 'x';
+    return { cells: r.cells, kind: v === 'z' ? null : v === '1' ? '1' : v === '0' ? '0' : 'x' };
+  });
 }
