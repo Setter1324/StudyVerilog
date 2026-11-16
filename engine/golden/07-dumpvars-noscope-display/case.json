@@ -1,0 +1,12 @@
+{
+  "title": "범위 없는 $dumpvars(1)과 한글 $display (스테이지 1-7, 1-13, 1-14)",
+  "checks": [
+    { "kind": "hasSignal", "signal": "t_test.H" },
+    { "kind": "noSignal", "signal": "t_test.ins_name.w1" },
+    { "kind": "signalAt", "signal": "t_test.H", "time": 30, "value": "1" },
+    { "kind": "signalAt", "signal": "t_test.H", "time": 60, "value": "0" },
+    { "kind": "logIncludes", "text": " 70: A=1 B=1 C=1 H=1" },
+    { "kind": "logIncludes", "text": "t=75: 기록원은 계속 지켜봐요" },
+    { "kind": "end", "time": 80 }
+  ]
+}

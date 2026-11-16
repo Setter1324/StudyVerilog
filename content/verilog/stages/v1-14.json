@@ -1,0 +1,153 @@
+{
+  "id": "v1-14",
+  "draft": "문구와 정답은 초안이다. 강의자료 기준으로 주찬이 확인한다(최종계획서 14.4).",
+  "type": "predict",
+  "top": "t_test",
+  "intro": "$dumpfile은 파형을 적을 파일을, $dumpvars는 어디까지 적을지를 정해요. 실행하기 전에 ins_name 건물 안의 w1이 파형에 적힐지 골라요.",
+  "files": {
+    "design.sv": {
+      "template": "module test(H, A, B, C);\n  output H;\n  input A, B, C;\n  wire w1;\n\n  or  (w1, A, B);\n  and (H, w1, C);\nendmodule\n"
+    },
+    "testbench.sv": {
+      "template": "module t_test;\n  reg A, B, C;\n  wire H;\n\n  test ins_name(H, A, B, C);\n\n  initial begin\n    $dumpfile(\"dump.vcd\");\n    $dumpvars(1);\n    $monitor(\"%3t: A=%b B=%b C=%b H=%b\", $time, A, B, C, H);\n    {A, B, C} = 3'b000;\n    repeat (7) #10 {A, B, C} = {A, B, C} + 1;\n    #10 $finish;\n  end\nendmodule\n"
+    }
+  },
+  "question": {
+    "kind": "dumped",
+    "prompt": "ins_name 안의 w1이 파형에 나올까요?",
+    "signal": "t_test.ins_name.w1",
+    "choices": [
+      "나와요",
+      "안 나와요"
+    ]
+  },
+  "hints": [
+    "$dumpvars의 숫자는 모듈을 몇 단계 깊이까지 적을지예요. 0은 끝까지 전부예요.",
+    "1단계는 맨 위 모듈 t_test의 신호(A, B, C, H)예요. ins_name 건물 안은 2단계예요.",
+    "w1은 ins_name 안에 있어서 $dumpvars(1)로는 적히지 않아요. $dumpvars(0)이나 $dumpvars(2)면 적혀요."
+  ],
+  "scene": {
+    "cols": 9,
+    "rows": 5,
+    "gates": [
+      {
+        "id": "box",
+        "label": "ins_name",
+        "at": [
+          4,
+          2
+        ],
+        "roof": "blue"
+      }
+    ],
+    "roads": [
+      {
+        "signal": "A",
+        "cells": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            2,
+            1
+          ],
+          [
+            3,
+            1
+          ],
+          [
+            4,
+            1
+          ]
+        ]
+      },
+      {
+        "signal": "B",
+        "cells": [
+          [
+            0,
+            2
+          ],
+          [
+            1,
+            2
+          ],
+          [
+            2,
+            2
+          ],
+          [
+            3,
+            2
+          ]
+        ]
+      },
+      {
+        "signal": "C",
+        "cells": [
+          [
+            0,
+            3
+          ],
+          [
+            1,
+            3
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            3,
+            3
+          ],
+          [
+            4,
+            3
+          ]
+        ]
+      },
+      {
+        "signal": "H",
+        "cells": [
+          [
+            5,
+            2
+          ],
+          [
+            6,
+            2
+          ],
+          [
+            7,
+            2
+          ]
+        ]
+      }
+    ],
+    "houses": [
+      {
+        "signal": "H",
+        "at": [
+          8,
+          2
+        ]
+      }
+    ]
+  },
+  "bind": {
+    "A": "t_test.A",
+    "B": "t_test.B",
+    "C": "t_test.C",
+    "H": "t_test.H"
+  },
+  "check": [],
+  "solution": {
+    "answer": "안 나와요"
+  }
+}

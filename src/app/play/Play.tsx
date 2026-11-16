@@ -193,8 +193,9 @@ export function Play({ id }: { id: string }) {
 
   const run = useCallback(async () => {
     if (!data || running) return;
-    if (data.question && !(values[ANSWER] ?? '').trim()) {
-      setError(data.question.kind === 'choice' ? '먼저 답을 골라요. 고른 뒤에 재생해서 확인해요.' : '먼저 숫자를 적어요.');
+    // 예측·타이밍형은 답을 먼저 고른다(6.2). afterRun 문제(보스)는 실행해서 파형을 본 뒤에 고른다
+    if (data.question && !data.question.afterRun && !(values[ANSWER] ?? '').trim()) {
+      setError(data.question.kind === 'number' ? '먼저 숫자를 적어요.' : '먼저 답을 골라요. 고른 뒤에 재생해서 확인해요.');
       return;
     }
     setRunning(true);
@@ -217,9 +218,16 @@ export function Play({ id }: { id: string }) {
       setTimeline(tl);
       setVerdict(g);
       if (g.pass && meta) pass(meta.id);
-      setT(0);
       setDismissed(false);
-      setPlaying(true);
+      if (res.timedOut) {
+        // 해가 지지 않은 코드는 상한(10,000틱)까지 재생하지 않고 바로 결과를 보여 준다 (6.3)
+        setT(tl.end);
+        setPlaying(false);
+        sfx.fail();
+      } else {
+        setT(0);
+        setPlaying(true);
+      }
     } catch (e) {
       setError(`엔진을 불러오지 못했어요: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
@@ -422,7 +430,7 @@ export function Play({ id }: { id: string }) {
               q={data.question}
               value={values[ANSWER] ?? ''}
               onChange={(v) => setDraft(id, { ...values, [ANSWER]: v })}
-              result={verdict && timeline && t >= timeline.end ? verdict.pass : undefined}
+              result={verdict && timeline && t >= timeline.end ? verdict.answer : undefined}
             />
           )}
           <div className={s.editorActions}>
