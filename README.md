@@ -4,7 +4,7 @@
 
 - 정적 웹 사이트 (Vite + React + TypeScript), GitHub Pages 배포: `https://setter1324.github.io/StudyVerilog/`
 - 실행 엔진: 브라우저 안에서 도는 Icarus Verilog (WebAssembly), 서버 없음
-- 기준 문서: 최종 계획 보고서 (`docs/`에 사본을 둘 예정)
+- 기준 문서: [최종 계획 보고서](docs/KW-STUDY-SITE-최종계획서.md)
 
 ## 개발
 
