@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { parseHash } from './route';
+import { UiGallery } from './UiGallery';
 
 function subscribe(cb: () => void) {
   window.addEventListener('hashchange', cb);
@@ -20,6 +21,8 @@ export function App() {
       return <main><h1>플레이 {route.id}</h1></main>;
     case 'guide':
       return <main><h1>도감</h1></main>;
+    case 'ui':
+      return <UiGallery />;
     default:
       return <main><h1>찾을 수 없어요</h1><a href="#/">첫 화면으로</a></main>;
   }

@@ -24,21 +24,26 @@ jobs:
           dest=public/fonts
           rm -rf "$dest" && mkdir -p "$dest/pretendard" "$dest/jetbrains-mono" "$dest/d2coding"
 
-          # Pretendard: 가변 글꼴의 동적 서브셋(필요한 글자 구간만 받는다)
+          # Pretendard: 가변 글꼴을 자주 쓰는 글자(KS X 1001 한글 2350자, 라틴, 문장 부호)만 남겨 woff2로
+          pip install --quiet fonttools brotli
           gh release download -R orioncactus/pretendard --pattern 'Pretendard-*.zip' -D "$tmp/pre"
           unzip -q "$tmp"/pre/*.zip -d "$tmp/pre/x"
-          find "$tmp/pre/x" -maxdepth 4 -type d | head -n 40
-          find "$tmp/pre/x" -iname '*.zip' | head
-          # 압축 안에 또 압축이 있으면 푼다
-          for z in $(find "$tmp/pre/x" -iname '*.zip'); do unzip -q -o "$z" -d "${z%.zip}"; done
-          css=$(find "$tmp/pre/x" -type f -iname '*variable*dynamic*subset*.css' ! -iname '*.min.css' | head -n 1)
-          [ -n "$css" ] || css=$(find "$tmp/pre/x" -type f -iname '*variable*dynamic*subset*.css' | head -n 1)
-          one=$(find "$tmp/pre/x" -type f -iname 'PretendardVariable.subset.*.woff2' | head -n 1)
-          echo "css=$css one=$one"
-          sub=$(dirname "$one")
-          cp "$sub"/PretendardVariable.subset.*.woff2 "$dest/pretendard/"
-          # css 안의 글꼴 경로를 같은 폴더로 맞춘다
-          sed -E 's#url\((["'"'"']?)[^)"'"'"']*/([^/)"'"'"']+\.woff2)#url(\1\2#g' "$css" > "$dest/pretendard/pretendard.css"
+          var=$(find "$tmp/pre/x" -type f -name 'PretendardVariable.woff2' | head -n 1)
+          python3 - "$tmp/chars.txt" <<'PY'
+          import sys
+          cs = set()
+          for hi in range(0xB0, 0xC9):
+              for lo in range(0xA1, 0xFF):
+                  try:
+                      cs.add(bytes([hi, lo]).decode('euc-kr'))
+                  except UnicodeDecodeError:
+                      pass
+          cs.update(chr(c) for c in range(0x3131, 0x318F))
+          open(sys.argv[1], 'w', encoding='utf-8').write(''.join(sorted(cs)))
+          PY
+          pyftsubset "$var" --text-file="$tmp/chars.txt" \
+            --unicodes='U+0020-007E,U+00A0-00FF,U+2010-2027,U+2030-205E,U+2190-21FF,U+2200-22FF,U+2460-24FF,U+25A0-25FF,U+3000-303F,U+FF01-FF5E' \
+            --flavor=woff2 --layout-features='*' --output-file="$dest/pretendard/PretendardVariable-subset.woff2"
           gh api repos/orioncactus/pretendard/license --jq .content | base64 -d > "$dest/pretendard/LICENSE.txt"
           gh release view -R orioncactus/pretendard --json tagName --jq .tagName > "$dest/pretendard/VERSION"
 
@@ -55,7 +60,6 @@ jobs:
           gh release download -R naver/d2codingfont --pattern '*.zip' -D "$tmp/d2"
           unzip -q -O cp949 "$tmp"/d2/*.zip -d "$tmp/d2/x" || unzip -q "$tmp"/d2/*.zip -d "$tmp/d2/x"
           ttf=$(find "$tmp/d2/x" -type f -iname 'D2Coding-Ver*.ttf' ! -iname '*bold*' | head -n 1)
-          pip install --quiet fonttools brotli
           pyftsubset "$ttf" --unicodes='U+1100-11FF,U+3130-318F,U+AC00-D7A3' \
             --flavor=woff2 --layout-features='*' --output-file="$dest/d2coding/D2Coding-hangul.woff2"
           gh api repos/naver/d2codingfont/license --jq .content | base64 -d > "$dest/d2coding/LICENSE.txt" \
@@ -63,8 +67,7 @@ jobs:
           gh release view -R naver/d2codingfont --json tagName --jq .tagName > "$dest/d2coding/VERSION"
 
           du -sh "$dest"/*
-          ls "$dest/pretendard" | head
-          head -c 600 "$dest/pretendard/pretendard.css"
+          ls -l "$dest"/*
       - name: 커밋
         run: |
           git config user.name "github-actions[bot]"

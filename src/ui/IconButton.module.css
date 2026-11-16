@@ -1,0 +1,38 @@
+.icon {
+  display: inline-grid;
+  place-items: center;
+  width: var(--icon-button);
+  height: var(--icon-button);
+  padding: 0;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--hairline);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: background-color var(--dur-ui) var(--ease-ui);
+}
+
+.icon:hover {
+  background: var(--surface-soft);
+}
+
+.icon:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+.icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.on {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.on:hover {
+  background: var(--accent-soft);
+}

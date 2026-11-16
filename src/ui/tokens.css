@@ -29,6 +29,68 @@
   --val-x: #b26dff;
   --val-z: #8e8e93;
 
+  /* 월드 팔레트 (7.4). 윗면 색이다. 옆면은 --world-shade와 섞어 만든다 */
+  --world-grass-a: #9ad86c;
+  --world-grass-b: #90d163;
+  --world-path: #f5e4b6;
+  --world-water: #74c8f6;
+  --world-plaza-a: #f0f2f7;
+  --world-plaza-b: #dee3ed;
+  --world-dirt: #b98459;
+  --world-stone: #9aa3b5;
+  --world-wall: #fff3dc;
+  --world-roof-teal: #2fb7b1;
+  --world-roof-blue: #4c8fe6;
+  --world-roof-gray: #6b7484;
+  --world-leaf: #58b866;
+  --world-alpaca: #fff7ea;
+  --world-shade: #1f2d55;
+  /* 월드 소품 색 (첫 화면 시안의 섬, world-generator.md) */
+  --world-grass-side: #7cbd56;
+  --world-path-edge: #e3cc90;
+  --world-water-hi: #b4e2fc;
+  --world-wheat: #f4ce5e;
+  --world-wheat-dark: #dbb03c;
+  --world-crop: #7cc65c;
+  --world-crop-dark: #5fae45;
+  --world-rock: #bbc2ce;
+  --world-rock-dark: #272d3b;
+  --world-door: #8a5a3a;
+  --world-window: #8fd3ff;
+  --world-barn: #d2644b;
+  --world-board: #2e3542;
+  --world-seg-off: #454d5c;
+  --world-tower: #cdd3dd;
+  --world-flame: #ff8b2b;
+  --world-flame-tip: #ffd64a;
+  --world-flame-core: #fff1a8;
+  --world-flame-deep: #c2410c;
+  --world-crystal: #72e0e0;
+  --world-trunk: #9c6b45;
+  --world-leaf-top: #6ccb79;
+  --world-alpaca-face: #e6cfaa;
+  --world-alpaca-leg: #d8c4a0;
+  --world-eye: #3a2e2a;
+  --world-crate-band: #d98a00;
+  --world-fog: #cdbbff;
+  --world-iron: #3b4252;
+  --world-steel: #8a93a5;
+  --world-signal: #f04438;
+  --world-mirror: #cff6fa;
+  --world-white: #ffffff;
+  --world-flower-pink: #ff9fb5;
+  --world-cloud-left: #eef4fb;
+  --world-cloud-right: #dce8f5;
+  --world-shade-left: 16%;
+  --world-shade-right: 30%;
+
+  /* 주 버튼 글자. 다크에서는 대비 때문에 어두운 글자 (7.1) */
+  --on-accent: #ffffff;
+  --on-zone: #ffffff;
+  --code-text: #f5f5f7;
+  --locked-bg: rgba(0, 0, 0, 0.05);
+  --scrim: rgba(0, 0, 0, 0.32);
+
   /* 모양과 간격 (7.6) */
   --radius-card: 16px;
   --radius-card-lg: 20px;
@@ -37,6 +99,15 @@
   --space-gap: 12px;
   --space-section: 44px;
   --focus-ring: 0 0 0 3px rgba(0, 113, 227, 0.18);
+  --shadow-hero: 0 16px 48px rgba(0, 0, 0, 0.08);
+  --control-h: 48px;
+  --icon-button: 44px;
+  --radius-chip: 8px;
+
+  /* 움직임 (7.8) */
+  --dur-ui: 180ms;
+  --ease-ui: ease-out;
+  --dur-tick: 600ms;
 
   --font-sans: 'Pretendard Variable', Pretendard, 'Noto Sans KR', Inter, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', D2Coding, ui-monospace, monospace;
@@ -57,6 +128,9 @@
   --sky-top: #16233a;
   --success: #30d158;
   --code-bg: #0b0c10;
+  --on-accent: #0b1220;
+  --locked-bg: rgba(255, 255, 255, 0.06);
+  --scrim: rgba(0, 0, 0, 0.56);
 }
 
 *,
@@ -73,4 +147,46 @@ body {
   font-size: 16px;
   line-height: 1.6;
   word-break: keep-all;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-ui: 0ms;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* 본문 글꼴: Pretendard 가변 글꼴. 자주 쓰는 한글 2350자와 라틴만 남긴 서브셋이고,
+   없는 글자는 --font-sans의 다음 글꼴로 그린다 (7.5) */
+@font-face {
+  font-family: 'Pretendard Variable';
+  src: url('/fonts/pretendard/PretendardVariable-subset.woff2') format('woff2-variations');
+  font-weight: 45 920;
+  font-display: swap;
+}
+
+/* 코드 글꼴: JetBrains Mono, 한글은 D2Coding (7.5). 파일은 public/fonts/ */
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/fonts/jetbrains-mono/JetBrainsMono-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/fonts/jetbrains-mono/JetBrainsMono-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: D2Coding;
+  src: url('/fonts/d2coding/D2Coding-hangul.woff2') format('woff2');
+  unicode-range: U+1100-11FF, U+3130-318F, U+AC00-D7A3;
+  font-display: swap;
 }

@@ -1,0 +1,49 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.md .icon {
+  width: 24px;
+  height: 24px;
+}
+
+.sm .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.icon {
+  flex: none;
+}
+
+.glyph {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  min-width: 1ch;
+}
+
+.md .glyph {
+  font-size: 16px;
+}
+
+.sm .glyph {
+  font-size: 13px;
+}
+
+.name {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
