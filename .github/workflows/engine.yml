@@ -77,4 +77,9 @@ jobs:
             cat $(find . -name report.md | head -n 1) 2>/dev/null || true
           } > notes.md
           files=$(find . -maxdepth 4 -type f \( -name '*.js' -o -name '*.wasm' -o -name SHA256SUMS -o -name IVERILOG_COMMIT \))
-          gh release create "$GITHUB_REF_NAME" $files --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" --notes-file notes.md
+          # 웹에서 Release를 먼저 만들며 태그를 단 경우에는 자산만 올린다
+          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" $files --repo "$GITHUB_REPOSITORY" --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" $files --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" --notes-file notes.md
+          fi
