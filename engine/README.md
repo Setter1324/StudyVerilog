@@ -50,9 +50,11 @@ Icarus Verilog는 GPL-2.0-or-later다. 이 폴더의 엔진 관련 파일과 엔
 | 4 | `always #10`과 `$finish` (95에 끝남) | 같음 | 같음 | 같음 | 5/5 | 16 ms |
 | 5 | `repeat`와 `forever`가 같은 자극 | 같음 | 같음 | 같음 | 4/4 | 16 ms |
 | 6 | `$dumpvars(1)`: `test.ha.*`는 VCD에 없음 | 같음 | 같음 | 다름(*) | 5/5 | 15 ms |
-| 7 | 범위 없는 `$dumpvars(1)`, 한글 `$display` (스테이지 1-7, 1-14) | CI 대기 | CI 대기 | CI 대기 | wasm 7/7 | 16 ms |
+| 7 | 범위 없는 `$dumpvars(1)`, 한글 `$display` (스테이지 1-7, 1-14) | 같음(**) | 같음 | 같음 | 7/7 | 16 ms |
 
 (*) 같은 시각 안에서 값 변화 줄의 순서만 다르다(t=30에서 `0!`·`1"` 대 `1"`·`0!`). 신호 값은 같다. 그래서 판정은 원문이 아니라 신호 변화로 한다.
+
+(**) 알려진 버전 차이: 네이티브 12.0은 `-g2012`에서 범위 없는 `$dumpvars(1)`에 `VCD warning: $dumpvars: Package ($unit) is not dumpable with VCD.` 한 줄을 더 찍는다. wasm(14.0 devel)은 찍지 않는다. VCD에 담기는 신호와 값은 같다. `compare.mjs`의 `KNOWN_LOG_DIFFS`가 비교할 때만 이 줄을 뺀다. 수업 화면(EDA Playground)이 12.0이면 학생은 이 경고를 볼 수 있으니 도감에 적는다.
 
 로컬에서 돌리려면(리눅스나 WSL, iverilog 설치 필요):
 
