@@ -1,0 +1,6 @@
+VCD info: dumpfile dump.vcd opened for output.
+  0: A=0 B=0 C=0 D=0 E=0
+ 10: A=1 B=0 C=0 D=1 E=0
+ 20: A=1 B=0 C=1 D=1 E=1
+ 30: A=0 B=1 C=1 D=1 E=1
+testbench.sv:17: $finish called at 40 (1s)

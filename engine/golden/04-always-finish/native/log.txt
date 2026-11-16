@@ -1,0 +1,12 @@
+VCD info: dumpfile dump.vcd opened for output.
+  0: clk=0 count= 0
+ 10: clk=1 count= 1
+ 20: clk=0 count= 1
+ 30: clk=1 count= 2
+ 40: clk=0 count= 2
+ 50: clk=1 count= 3
+ 60: clk=0 count= 3
+ 70: clk=1 count= 4
+ 80: clk=0 count= 4
+ 90: clk=1 count= 5
+testbench.sv:15: $finish called at 95 (1s)

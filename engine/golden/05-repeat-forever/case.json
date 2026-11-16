@@ -1,0 +1,9 @@
+{
+  "title": "repeat와 forever",
+  "checks": [
+    { "kind": "signalAt", "signal": "test.a", "time": 70, "value": "111" },
+    { "kind": "signalAt", "signal": "test.b", "time": 70, "value": "111" },
+    { "kind": "sameWaveform", "a": "test.a", "b": "test.b" },
+    { "kind": "end", "time": 75 }
+  ]
+}
