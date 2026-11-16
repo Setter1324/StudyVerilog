@@ -16,7 +16,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: node engine/fetch-verisim.mjs public/engine
+      - run: node engine/fetch-engine.mjs public/engine
       - run: npm run build
       - name: 미리보기 서버
         run: |

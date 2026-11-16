@@ -1,0 +1,14 @@
+{
+  "name": "engine-v0.1.0",
+  "url": "https://github.com/Setter1324/StudyVerilog/releases/download/engine-v0.1.0/{file}",
+  "iverilog": "c7530dbcc186de2f21eacde14fd28061b885924c (14.0 devel), Emscripten 6.0.0, engine/build/",
+  "license": "GPL-2.0-or-later",
+  "files": {
+    "ivlpp.js": "97d41e9cd11588b7bdbc952873cd71658165e6bd7938c5d39275cedb9ddad405",
+    "ivlpp.wasm": "729d3ee88a0ca3b6e9941c16e2af76da82691be5ebd7b61ade182e8be649dcc4",
+    "ivl.js": "a2f56ba8611135d43971053605fb013550dc30d1671e9808a7f82ab02838e915",
+    "ivl.wasm": "9f410948e096f4d845f7e6684cad8c6c38e5ae6620ffe1db8a487c8a0574e9e1",
+    "vvp.js": "7bb3762198fb5297726bdd0714b4bcc2ac09d99122deefba544d45c6beaebb05",
+    "vvp.wasm": "3ac662e267c1a147364a13e1c975e71c4a15b63e8a7fe2a4d7ef1ae805054760"
+  }
+}

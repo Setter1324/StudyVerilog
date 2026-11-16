@@ -19,7 +19,8 @@
 | 라이선스 | 앱 코드 MIT(`LICENSE`), 엔진 GPL(`engine/COPYING`) |
 | PR #1 뼈대 | 합침. Vite + React + TS, ESLint, Vitest, CI/배포 워크플로 |
 | PR #2 엔진 검증(0단계) | 합침. 골든 6개가 네이티브 Icarus Verilog 12.0과 VeriSim wasm(14.0 devel)에서 로그와 VCD 신호 변화가 같다. 결과 표는 `engine/README.md` |
-| PR #3 엔진 직접 빌드 | 합침. `engine.yml`이 Icarus Verilog `c7530db`를 Emscripten으로 빌드하고 골든 6개를 다시 통과했다. Release는 아직 없다(0.2) |
+| PR #3 엔진 직접 빌드 | 합침. `engine.yml`이 Icarus Verilog `c7530db`를 Emscripten으로 빌드하고 골든 6개를 다시 통과했다 |
+| 엔진 Release | [`engine-v0.1.0`](https://github.com/Setter1324/StudyVerilog/releases/tag/engine-v0.1.0). PR #8로 수동 실행이 태그와 Release를 만들게 했다. 사이트와 CI는 이 Release를 받는다(`engine/engine.lock.json`) |
 | PR #4 토큰·컴포넌트·첫 화면 | 합침. 월드 팔레트, 컴포넌트 11개(`#/ui`에서 보기), 글꼴, 월드 렌더러 이식, 첫 화면, 스테이지 목록, 진행도 저장 |
 | PR #5 플레이 화면과 1-1(1단계) | 합침. Web Worker 안의 엔진(WasmRunner), 장면, 파형, 콘솔, 채점, 결과 판, 힌트. 미리보기 빌드에서 1-1을 실제로 풀어 통과·실패·컴파일 오류를 확인했다 |
 | PR #6 문제 유형 6가지 | 합침. 예측·빈칸·버그 수정·변환·설계·타이밍 화면, 초안 스테이지 1-1, 1-2, 1-3, 1-10, 1-11, 1-12. CI가 스테이지마다 "정답 예시는 통과, 시작 코드는 실패"를 엔진으로 확인한다 |
@@ -36,17 +37,15 @@ CI(`ci.yml`)의 작업은 셋이다.
 | --- | --- | --- |
 | 1 | 초안 스테이지 6개의 문구와 정답을 강의자료와 맞춰 본다. `content/verilog/stages/*.json`의 `draft`가 표시다 | 14.4: 스테이지 문구와 정답은 주찬이 정한다 |
 | 2 | 1-12는 강의자료 18쪽 회로도가 있어야 원래 문제가 된다. 새 세션에 그 쪽을 첨부한다(저장소에는 올리지 않는다) | 지금은 같은 형식의 대신 문제다 |
-| 3 | 엔진 Release: GitHub 웹에서 Actions → engine → Run workflow는 Release를 만들지 않는다. 태그 `engine-v0.1.0`을 웹에서 만들면(Releases → Draft a new release → 새 태그) `engine.yml`이 돌아 자산을 올린다 | 세션에서 태그 push와 ref 생성 API가 막혀 있다(0.3) |
-| 4 | 사이트를 직접 열어 1-1을 풀어 본다. 휴대폰 폭도 본다 | 세션에서는 github.io를 열 수 없어 CI 스크린샷으로만 봤다 |
+| 3 | 사이트를 직접 열어 1-1을 풀어 본다. 휴대폰 폭도 본다 | 세션에서는 github.io를 열 수 없어 CI 스크린샷으로만 봤다 |
 
-3번을 하기 전 사이트는 VeriSim 저장소의 고정 커밋(`engine/verisim.lock.json`, sha256 확인)에서 엔진을 받아 싣는다. 3번 뒤에 Release로 바꾸는 일은 구현 세션이 한다.
 
 ### 0.3 작업 환경에서 알게 된 것
 
 | 사실 | 대응 |
 | --- | --- |
 | 세션 셸에서 npm 레지스트리가 막혀 있다. `node_modules`가 없어 로컬에서 tsc·eslint·vitest·vite를 못 돌린다 | 설치·빌드·테스트는 CI에 맡긴다. 의존성을 더할 때는 lock 파일을 Actions에서 만든다 |
-| GitHub는 git과 REST 일부만 된다. `gh pr create`(GraphQL) 403, 태그 push 끊김, `git/refs` 쓰기 403, Pages 설정 API 403, 아티팩트 다운로드 404 | PR은 REST(`gh api repos/.../pulls --method POST --input body.json`), 합치기는 `gh api -X PUT repos/.../pulls/N/merge`. 태그와 Release는 주찬이 웹에서 |
+| GitHub는 git과 REST 일부만 된다. `gh pr create`(GraphQL) 403, 태그 push 끊김, `git/refs` 쓰기 403, Pages 설정 API 403, 아티팩트 다운로드 404 | PR은 REST(`gh api repos/.../pulls --method POST --input body.json`), 합치기는 `gh api -X PUT repos/.../pulls/N/merge`. 워크플로 수동 실행(`actions/workflows/<파일>/dispatches`)은 된다. 엔진 Release는 `engine.yml`을 `release_tag`와 함께 실행해 워크플로가 태그를 만든다 |
 | 세션에서 `setter1324.github.io`를 열 수 없다 | `shots.yml`이 스크린샷을 PNG base64로 작업 로그에 남긴다. 작업 로그는 `gh api repos/.../actions/jobs/<id>/logs`로 읽을 수 있다 |
 | 다른 저장소의 Release 파일을 세션에서 받을 수 없다(글꼴 등) | 일회용 워크플로가 받아서 브랜치에 커밋하게 하고, 끝나면 워크플로를 지운다(글꼴 때 썼다) |
 | 세션에서 내려받은 코드(VeriSim의 wasm 등)를 로컬에서 실행하는 것은 막힌다 | 엔진 실행 확인은 CI에서 한다. 직접 쓴 스크립트와 `google-chrome --headless` 스크린샷은 로컬에서 된다 |
@@ -74,7 +73,7 @@ KW STUDY SITE는 **설치 없이 링크로 여는 웹 사이트**로 만들고 G
 
 다음 행동은 세 가지다.
 
-1. 주찬: 초안 스테이지 확인, 1-12 회로도 첨부, 엔진 Release 태그 만들기(0.2).
+1. 주찬: 초안 스테이지 확인, 1-12 회로도 첨부(0.2).
 2. 구현 세션: 남은 스테이지 1-4~1-9, 1-13~1-15를 강의자료를 보고 만든다(14.2의 7번).
 3. 구현 세션: 2단계 완료 기준(키보드만으로 15개 통과)을 확인하고 `v0.1.0`을 낸다.
 
@@ -595,7 +594,7 @@ export interface Timeline {
 
 - 시뮬레이션 시간 10,000틱, 로그 2,000줄, 실행 5초가 시작값이다(`DEFAULT_LIMITS`). 시간 상한은 감시 모듈(`__kwss_guard`: `initial #10000 $finish;`)을 함께 컴파일해서 건다. 그래도 워커가 답하지 않으면 워커를 끝내고 새로 만든다.
 - 엔진 파일(js·wasm 세 쌍)은 사이트의 `engine/` 폴더에 있고, 첫 실행 때 받아 브라우저 캐시에 둔다. 플레이 화면에 들어오면 미리 받기 시작한다(`warmUp`). 진행 표시는 남은 일이다.
-- 엔진 파일은 저장소에 넣지 않는다. 빌드 때 `node engine/fetch-verisim.mjs public/engine`이 VeriSim 고정 커밋에서 받아 sha256을 확인한다. `engine-v*` Release가 생기면 그것을 받도록 바꾼다.
+- 엔진 파일은 저장소에 넣지 않는다. 빌드 때 `node engine/fetch-engine.mjs public/engine`이 이 저장소의 `engine-v0.1.0` Release에서 받아 sha256을 확인한다(`engine/engine.lock.json`). 새 엔진은 `engine.yml`을 `release_tag`와 함께 수동 실행해 내고 lock 파일을 바꾼다.
 - 워커는 스레드와 `SharedArrayBuffer` 없이 돈다. GitHub Pages에서는 그에 필요한 응답 헤더를 설정할 수 없다.
 - 사용자에게 보이는 로그와 오류에서는 감시·덤프 모듈의 흔적을 지우고, 파일 경로를 이름만 남긴다(`testbench.sv:14:`).
 
@@ -635,7 +634,7 @@ StudyVerilog/
 │  ├─ sim/                   types.ts, vcd.ts(VCD → 타임라인), grade.ts(채점), stage.ts(스테이지 소스와 채점)
 │  └─ state/                 content.ts(콘텐츠 읽기), progress.ts(진행도 저장)
 ├─ content/verilog/          zones.json, stages.json, stages/<id>.json
-├─ engine/                   COPYING(GPL), README.md, verisim.lock.json, fetch-verisim.mjs,
+├─ engine/                   COPYING(GPL), README.md, engine.lock.json, verisim.lock.json(0단계 기록), fetch-engine.mjs,
 │                            build/(build.sh, iverilog-wasm.patch), golden/(골든 6개와 네이티브 결과, 비교·스테이지 검증 스크립트)
 ├─ public/fonts/             Pretendard, JetBrains Mono, D2Coding (public/engine/은 빌드 때 받는다)
 ├─ tests/                    Vitest(route, vcd, iverilog, grade), e2e/play-1-1.cjs(임시)
@@ -647,7 +646,7 @@ StudyVerilog/
 | 무엇 | 저장소 | 라이선스 | 어떻게 쓰나 |
 | --- | --- | --- | --- |
 | 실행 엔진 | [steveicarus/iverilog](https://github.com/steveicarus/iverilog) | GPL-2.0-or-later | `engine.yml`이 커밋 `c7530db`(13.0 이후 master, 14.0 devel)를 받아 빌드한다. 계획은 13.0 태그였지만 wasm 패치의 `t-dll.cc` 부분이 13.0에 맞지 않아 VeriSim과 같은 커밋을 쓴다. 13.0으로 내리려면 패치를 다시 써야 한다 |
-| 엔진 빌드 참고 | [senolgulgonul/verisim](https://github.com/senolgulgonul/verisim) | GPL-2.0 | `build.sh`와 패치를 `engine/build/`에 가져왔다. 지금 사이트는 이 저장소의 wasm(커밋 `ab0ff38`)을 받아 싣는다 |
+| 엔진 빌드 참고 | [senolgulgonul/verisim](https://github.com/senolgulgonul/verisim) | GPL-2.0 | `build.sh`와 패치를 `engine/build/`에 가져왔다. 0단계 검증은 이 저장소의 wasm(커밋 `ab0ff38`)으로 했다 |
 | 엔진 빌드 참고 | [gogo-fpga/toolchain](https://github.com/gogo-fpga/toolchain/pull/37) | 저장소에서 확인 | WASI 빌드 패치와 "네이티브와 바이트 단위로 비교하는 CI"를 참고한다 |
 | 화면 | facebook/react | MIT | npm (설치됨) |
 | 빌드 | vitejs/vite | MIT | npm (설치됨) |
@@ -689,7 +688,7 @@ main에 합치면 GitHub Actions가 빌드해서 GitHub Pages에 올린다. 사�
 | 2 | Claude가 push 할 수 있게 연결 | ✅ 새 세션에서는 저장소를 다시 연결한다 |
 | 3 | 저장소를 공개로 바꾸기 | ✅ |
 | 4 | Settings → Pages → Source를 "GitHub Actions"로 | ✅ 배포가 성공했다 |
-| 5 | 엔진 Release 태그 `engine-v0.1.0` 만들기 | ⬜ 주찬 (0.2) |
+| 5 | 엔진 Release `engine-v0.1.0` | ✅ |
 
 ### 11.2 브랜치와 커밋
 
@@ -704,7 +703,7 @@ main에 합치면 GitHub Actions가 빌드해서 GitHub Pages에 올린다. 사�
 | --- | --- | --- | --- |
 | `ci.yml` | 모든 PR과 main push | `check`: 설치, 엔진 받기, 타입 검사, 린트, 단위 테스트, 빌드. `golden`: 네이티브 대 wasm 골든 비교, 스테이지 검증 | ✅ |
 | `deploy.yml` | main에 push, 수동 실행 | 설치, 엔진 받기, 빌드, Pages 배포 | ✅ |
-| `engine.yml` | 수동 실행, `engine-v*` 태그, `engine/build/**`를 바꾼 PR | iverilog를 WebAssembly로 빌드하고 골든 비교. 태그면 Release 자산으로 올린다 | ✅ 빌드·비교 통과. Release는 태그를 기다린다 |
+| `engine.yml` | 수동 실행(`release_tag` 입력), `engine-v*` 태그, `engine/build/**`를 바꾼 PR | iverilog를 WebAssembly로 빌드하고 골든 비교. `release_tag`나 태그가 있으면 Release 자산으로 올린다 | ✅ `engine-v0.1.0` 출시 |
 | `shots.yml` | 모든 PR, 수동 실행 | 빌드를 미리보기로 띄워 스크린샷, 임시 Playwright로 스테이지 몇 개를 실제로 풀기. 스크린샷은 로그에 base64로도 남긴다 | ✅ |
 
 배포 워크플로는 Vite 공식 문서의 GitHub Pages 예시를 따른다. Vite의 `base`는 `/StudyVerilog/`가 기본이고 환경 변수 `VITE_BASE`로 바꿀 수 있다. Actions 실행 로그에 "Node.js 20 is deprecated"(`actions/checkout@v4`, `setup-node@v4`) 경고가 뜬다. 지금은 동작하니, 새 메이저 버전이 나오면 올린다.
@@ -813,7 +812,7 @@ main에 합치면 GitHub Actions가 빌드해서 GitHub Pages에 올린다. 사�
 ### 14.2 시작 순서
 
 1. ~~저장소 뼈대~~ ✅ PR #1. LICENSE, 합치기, Pages 배포 확인까지 끝났다.
-2. ~~엔진 검증(0단계)~~ ✅ PR #2(VeriSim wasm), PR #3(직접 빌드). **남은 일:** 엔진 Release 태그(주찬, 0.2), 사이트가 Release를 받도록 바꾸기, 첫 실행 진행 표시.
+2. ~~엔진 검증(0단계)~~ ✅ PR #2(VeriSim wasm), PR #3(직접 빌드), Release `engine-v0.1.0`(PR #8, #9). **남은 일:** 첫 실행 진행 표시.
 3. ~~토큰, 컴포넌트 11개, 글꼴~~ ✅ PR #4.
 4. ~~첫 화면~~ ✅ PR #4. **남은 일:** 섬의 알파카 걷기(5.5).
 5. ~~스테이지 1-1의 장면과 타임라인 재생~~ ✅ PR #5.

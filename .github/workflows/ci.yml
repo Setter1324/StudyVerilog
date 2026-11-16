@@ -18,8 +18,8 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test
-      - name: 엔진 wasm 받기 (고정 커밋, 해시 확인)
-        run: node engine/fetch-verisim.mjs public/engine
+      - name: 엔진 wasm 받기 (engine-v* Release, 해시 확인)
+        run: node engine/fetch-engine.mjs public/engine
       - run: npm run build
 
   # 엔진 골든 테스트: 네이티브 Icarus Verilog와 브라우저 엔진(wasm)의 결과를 비교한다. (최종계획서 13.1)
@@ -32,18 +32,18 @@ jobs:
           node-version-file: .nvmrc
       - name: 네이티브 iverilog 설치
         run: sudo apt-get update && sudo apt-get install -y iverilog
-      - name: 브라우저 엔진 받기 (VeriSim wasm, 해시 확인)
-        run: node engine/fetch-verisim.mjs engine/.cache/verisim
+      - name: 브라우저 엔진 받기 (engine-v* Release, 해시 확인)
+        run: node engine/fetch-engine.mjs engine/.cache/engine
       - name: 네이티브로 실행
         run: bash engine/golden/run-native.sh engine/golden engine/.out/native
       - name: wasm으로 실행
-        run: node engine/golden/run-wasm.mjs engine/.cache/verisim engine/golden engine/.out/wasm
+        run: node engine/golden/run-wasm.mjs engine/.cache/engine engine/golden engine/.out/wasm
       - name: 비교
         run: node engine/golden/compare.mjs engine/golden engine/.out
         env:
           GOLDEN_PRINT_NATIVE: '1'
       - name: 스테이지 검증 (정답 예시는 통과, 시작 코드는 실패)
-        run: node engine/golden/stages.mjs engine/.cache/verisim content/verilog/stages
+        run: node engine/golden/stages.mjs engine/.cache/engine content/verilog/stages
       - uses: actions/upload-artifact@v4
         if: always()
         with:
