@@ -24,7 +24,7 @@ export function Waveform({ timeline, bind, t, onSeek, highlight, onHover }: Wave
     return <div className={s.empty}>실행하면 파형이 여기에 그려져요.</div>;
   }
   const end = Math.max(1, timeline.end);
-  const plotW = W - LABEL - 8;
+  const plotW = W - LABEL - 36; // 오른쪽에 지금 값을 적을 자리
   const X = (time: number) => LABEL + (time / end) * plotW;
   const H = names.length * ROW + 22;
 

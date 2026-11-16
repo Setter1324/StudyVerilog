@@ -63,10 +63,12 @@ self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
       .split('\n')
       .filter((l) => !/__kwss_guard|__kwss_dump/.test(l))
       .join('\n');
+    // 파일 경로는 수업 화면처럼 이름만 보인다 (/testbench.sv:14 → testbench.sv:14)
+    const strip = (text: string) => text.replace(/(^|[\s(])\/([\w.-]+\.s?v):/gm, '$1$2:');
     const result: RunResult = {
       ok: out.ok,
       stage: out.stage,
-      log: out.ok ? log : out.compileLog,
+      log: strip(out.ok ? log : out.compileLog),
       diagnostics: out.diagnostics.filter((d) => !d.file.startsWith('__kwss')),
       vcd: out.vcd,
       timedOut: guard,
