@@ -1,6 +1,7 @@
-import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { WasmRunner } from '../../runner/wasmRunner';
 import type { RunResult } from '../../runner/types';
+import { delaysBySignal, passingAt, type Passing } from '../../sim/delays';
 import type { Grade } from '../../sim/grade';
 import { ANSWER, editable, fileKey, gradeStage, stageSources, visibleSource } from '../../sim/stage';
 import type { Timeline } from '../../sim/types';
@@ -9,7 +10,8 @@ import { STAGES, stageById, stageData, stagesOf, TYPE_NAMES, zoneById, type Stag
 import { useProgress } from '../../state/progress';
 import { Button, Chip, CodeBlank, IconButton, LockedLine, Sheet, Tabs, ZonePin } from '../../ui';
 import { sfx } from '../../audio/sfx';
-import { buildCircuit, circuitWalkers } from '../../world/circuit';
+import { BEAT_TICKS, beatAt, tickAt, type PlayBase } from '../../world/beat';
+import { buildCircuit, circuitWalkers, passingText } from '../../world/circuit';
 import { Walkers } from '../../world/Walkers';
 import { IsoSvg } from '../../world/IsoSvg';
 import { TopBar } from '../TopBar';
@@ -20,7 +22,6 @@ import { Waveform } from './Waveform';
 
 // 화면 코드는 Runner와 Timeline만 안다 (14.3)
 const runner = new WasmRunner();
-const TICK_MS = 600; // 시뮬레이션 1틱 (7.8)
 const SPEEDS = [0.5, 1, 2] as const;
 
 function go(hash: string) {
@@ -83,14 +84,29 @@ function FillEditor({
   );
 }
 
-function World({ data, timeline, t, highlight }: { data: StageData; timeline: Timeline | null; t: number; highlight?: string }) {
+function World({
+  data,
+  timeline,
+  t,
+  highlight,
+  passing,
+  clock,
+}: {
+  data: StageData;
+  timeline: Timeline | null;
+  t: number;
+  highlight?: string;
+  passing: Record<string, Passing>;
+  clock: (now: number) => number | null;
+}) {
   const values: Record<string, string> = {};
   for (const [short, full] of Object.entries(data.bind)) {
     values[short] = timeline ? valueAt(timeline.signals[full], t) : 'x';
   }
-  const scene = buildCircuit(data.scene, values, highlight);
+  const scene = buildCircuit(data.scene, values, highlight, passing);
   const walkers = circuitWalkers(data.scene, values);
   const dusk = timeline !== null && t >= timeline.end;
+  const busy = passingText(data.scene, passing);
   return (
     <div className={dusk ? `${s.world} ${s.dusk}` : s.world}>
       <IsoSvg
@@ -98,9 +114,9 @@ function World({ data, timeline, t, highlight }: { data: StageData; timeline: Ti
         className={s.worldSvg}
         title={`t=${t}의 마을. ${Object.entries(values)
           .map(([k, v]) => `${k}=${v}`)
-          .join(', ')}`}
+          .join(', ')}${busy.length ? `. ${busy.join(', ')}` : ''}`}
       >
-        <Walkers paths={walkers} />
+        <Walkers paths={walkers} clock={clock} />
       </IsoSvg>
     </div>
   );
@@ -131,13 +147,15 @@ export function Play({ id }: { id: string }) {
   const [dismissed, setDismissed] = useState(false);
   const [hover, setHover] = useState<string | undefined>();
   const [error, setError] = useState<string | null>(null);
+  /** 실행한 코드의 지연(#N), 출력 신호 이름 → 틱 수. 건물에서 지연을 셀 때 쓴다 (걷기 박자 계획 5.3) */
+  const [delays, setDelays] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (meta) open(meta.id);
     runner.warmUp();
   }, [meta, open]);
 
-  // 재생: 1틱 600ms. 아무 값도 바뀌지 않는 틱은 4배 빨리 지나간다. 끝 시각에 해가 지고 결과 판이 뜬다 (6.2)
+  // 재생: 틱은 언제나 240ms(속도로 나눈다)라서 코드에 쓴 시간이 화면에서 비례한다. 끝 시각에 해가 지고 결과 판이 뜬다 (6.2)
   const end = timeline?.end ?? 0;
   const isPlaying = playing && timeline !== null && t < end;
   /** 값이 바뀌는 시각들 (이전·다음 변화로 건너뛰기, 효과음) */
@@ -169,19 +187,75 @@ export function Play({ id }: { id: string }) {
     },
     [timeline, data, verdict],
   );
+  /** 건물마다 지금 출력을 바꾸는 중인지: 코드의 지연(#N)과 타임라인의 변화로 센다. 표시용이다 (걷기 박자 계획 5.3) */
+  const passing = useMemo(() => {
+    const out: Record<string, Passing> = {};
+    if (!timeline || !data) return out;
+    for (const g of data.scene.gates) {
+      if (!g.out) continue;
+      const full = data.bind[g.out];
+      const p = passingAt(full ? timeline.signals[full]?.changes : undefined, delays[g.out] ?? 0, t);
+      if (p) out[g.id] = p;
+    }
+    return out;
+  }, [timeline, data, delays, t]);
+
+  // 재생 시계: 기준점(재생을 시작하거나 속도를 바꾼 순간의 틱과 시각)에서 지금 틱을 계산한다.
+  // 틱마다 타이머를 다시 걸지 않으니 늦어진 시간이 쌓이지 않는다. 정수 틱이 바뀔 때만 setT를 부른다.
+  // 월드의 걷기도 같은 기준점에서 박자 위치를 얻는다. 시계는 하나다 (걷기 박자 계획 5.1, 5.2)
+  const base = useRef<PlayBase | null>(null);
+  const tRef = useRef(t);
+  const realTick = useRef(0);
   useEffect(() => {
-    if (!isPlaying || !timeline || !data) return;
-    const next = t + 1;
-    const busy = events.includes(next);
-    const h = setTimeout(
-      () => {
-        setT(Math.min(next, end));
-        if (busy) cue(next);
-      },
-      (busy ? TICK_MS : TICK_MS / 4) / speed,
-    );
-    return () => clearTimeout(h);
-  }, [isPlaying, t, end, speed, events, cue, timeline, data]);
+    tRef.current = t;
+  }, [t]);
+  useEffect(() => {
+    if (!isPlaying) return;
+    // 속도만 바꿨으면 지금 자리(소수 틱)에서 이어 가고, 건너뛰었으면 그 틱에서 시작한다
+    const start = Math.floor(realTick.current) === tRef.current ? realTick.current : tRef.current;
+    base.current = { tick: start, at: performance.now(), speed };
+    let raf = 0;
+    const frame = (now: number) => {
+      const b = base.current;
+      if (!b) return;
+      const real = Math.min(end, tickAt(b, now));
+      realTick.current = real;
+      const whole = Math.floor(real);
+      const prev = tRef.current;
+      if (whole !== prev) {
+        // 한 프레임에 여러 틱을 건너뛰었으면 효과음은 마지막 변화 하나만 낸다
+        const crossed = events.filter((x) => x > prev && x <= whole);
+        const last = crossed[crossed.length - 1];
+        if (whole >= end) cue(end);
+        else if (last !== undefined) cue(last);
+        tRef.current = whole;
+        setT(whole);
+      }
+      if (whole < end) raf = requestAnimationFrame(frame);
+    };
+    raf = requestAnimationFrame(frame);
+    return () => {
+      cancelAnimationFrame(raf);
+      base.current = null;
+    };
+  }, [isPlaying, speed, end, events, cue]);
+  // 탭이 가려지면 재생을 멈춘다
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.hidden) setPlaying(false);
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, []);
+  /** 월드의 박자 시계: 재생 중이면 박자 위치, 아니면 null(길 가운데에 선다) */
+  const beatTicks = data?.scene.beatTicks ?? BEAT_TICKS;
+  const walkClock = useCallback(
+    (now: number) => {
+      const b = base.current;
+      return b ? beatAt(Math.min(end, tickAt(b, now)), beatTicks) : null;
+    },
+    [end, beatTicks],
+  );
   const jump = (to: number) => {
     setPlaying(false);
     setT(Math.max(0, Math.min(end, to)));
@@ -204,8 +278,10 @@ export function Play({ id }: { id: string }) {
     setPlaying(false);
     setDismissed(true);
     try {
-      const res = await runner.run({ files: stageSources(data, values), top: data.top });
+      const files = stageSources(data, values);
+      const res = await runner.run({ files, top: data.top });
       setResult(res);
+      setDelays(delaysBySignal(files.map((f) => f.text).join('\n')));
       if (!res.ok || !res.vcd) {
         setTimeline(null);
         setVerdict(null);
@@ -334,7 +410,7 @@ export function Play({ id }: { id: string }) {
 
       <main className={s.grid}>
         <section className={s.worldPane} aria-label="월드">
-          <World data={data} timeline={timeline} t={t} highlight={hover} />
+          <World data={data} timeline={timeline} t={t} highlight={hover} passing={passing} clock={walkClock} />
           <div className={s.transport}>
             <div className={s.tbtns}>
               <button type="button" className={s.tbtn} onClick={() => jump(0)} disabled={!timeline} aria-label="처음으로" title="처음으로">
