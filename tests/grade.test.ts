@@ -21,6 +21,13 @@ describe('grade', () => {
     expect(g.failures[0]).toEqual({ message: 't=15에서 E가 1이어야 하는데 0이에요', time: 15 });
   });
 
+  it('logLine은 줄 전체가 같아야 한다($monitor 형식)', () => {
+    const tl = buildTimeline(vcd, log);
+    expect(grade(tl, [{ kind: 'logLine', text: ' 20: A=1 B=0 C=1 D=1 E=1' }], stage.bind).pass).toBe(true);
+    expect(grade(tl, [{ kind: 'logLine', text: '20: A=1 B=0 C=1 D=1 E=1' }], stage.bind).pass).toBe(false);
+    expect(grade(tl, [{ kind: 'logIncludes', text: '20: A=1 B=0 C=1 D=1 E=1' }], stage.bind).pass).toBe(true);
+  });
+
   it('빈칸 템플릿을 채운다', () => {
     const src = fillTemplate(stage.files['testbench.sv'].template, { b1: '|', b2: '&' });
     expect(src).toContain('assign D = A | B;');

@@ -74,6 +74,43 @@ const { chromium } = require(process.env.PW_PATH || 'playwright');
       console.log('dialog:', (await page.getByRole('dialog').innerText()).replace(/\n+/g, ' | '));
       await page.screenshot({ path: 'shots/play-timing.png' });
     });
+    const result = async (shot) => {
+      await page.getByRole('button', { name: '끝으로' }).click({ timeout: 30000 });
+      await page.getByRole('dialog').waitFor({ timeout: 10000 });
+      const text = (await page.getByRole('dialog').innerText()).replace(/\n+/g, ' | ');
+      console.log('dialog:', text);
+      await page.screenshot({ path: `shots/${shot}.png` });
+      return text;
+    };
+    await step('predict + fill 1-4', async () => {
+      await page.goto(base + '#/play/v1-04');
+      await page.getByLabel('빈칸 1: AND 건물을 지나는 데 걸리는 시간').fill('#2');
+      await page.getByRole('radio', { name: '0', exact: true }).check();
+      await page.getByRole('button', { name: '실행', exact: true }).click();
+      if (!(await result('play-1-4')).includes('맞았어요')) throw new Error('1-4 정답인데 맞았어요가 아니다');
+    });
+    await step('no $finish 1-9', async () => {
+      await page.goto(base + '#/play/v1-09');
+      await page.getByRole('button', { name: '실행', exact: true }).click();
+      // 해가 지지 않는 코드는 재생 없이 바로 결과 판이 뜬다
+      await page.getByRole('dialog').waitFor({ timeout: 30000 });
+      const text = (await page.getByRole('dialog').innerText()).replace(/\n+/g, ' | ');
+      console.log('dialog:', text);
+      await page.screenshot({ path: 'shots/play-1-9.png' });
+      if (!text.includes('10000')) throw new Error('1-9 시작 코드에서 끝나지 않는다는 안내가 없다');
+    });
+    await step('boss 1-15 (실행 뒤 답하기)', async () => {
+      await page.goto(base + '#/play/v1-15');
+      await page.getByLabel('빈칸 1: 인스턴스 이름(문패)').fill('ins_name');
+      await page.getByLabel('빈칸 2: 맨 위 모듈의 신호만 적는 깊이').fill('1');
+      await page.getByLabel('빈칸 3: 나머지 일곱 조합을 넣는 되풀이').fill('repeat (7)');
+      await page.getByRole('button', { name: '실행', exact: true }).click();
+      if (!(await result('play-1-15-first')).includes('파형을 보고')) throw new Error('1-15 답 없이 실행하면 파형을 보라고 해야 한다');
+      await page.getByRole('button', { name: '고치러 가기' }).click();
+      await page.getByRole('radio', { name: '(~A & B) | (A & C)', exact: true }).check();
+      await page.getByRole('button', { name: '실행', exact: true }).click();
+      if (!(await result('play-1-15')).includes('맞았어요')) throw new Error('1-15 정답인데 맞았어요가 아니다');
+    });
     await step('mobile 1-1 (390px, touch)', async () => {
       const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
       const m = await ctx.newPage();

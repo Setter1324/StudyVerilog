@@ -1,0 +1,185 @@
+{
+  "id": "v1-08",
+  "draft": "문구와 정답은 초안이다. 강의자료 기준으로 주찬이 확인한다(최종계획서 14.4).",
+  "type": "fill",
+  "top": "test",
+  "intro": "{A, B, C}를 000에서 시작해 10틱마다 1씩 올려 111까지 모든 조합을 넣어요. 같은 줄을 되풀이하는 낱말과 횟수를 채워요. t=80에 해가 져야 해요.",
+  "files": {
+    "testbench.sv": {
+      "template": "module test;\n  reg A, B, C;\n  wire w, Y;\n\n  or  (w, A, B);\n  and (Y, w, C);\n\n  initial begin\n    $monitor(\"%3t: A=%b B=%b C=%b Y=%b\", $time, A, B, C, Y);\n    {A, B, C} = 3'b000;\n    {{b1}} ({{b2}}) #10 {A, B, C} = {A, B, C} + 1;\n    #10 $finish;\n  end\nendmodule\n",
+      "lockOutsideBlanks": true
+    }
+  },
+  "blanks": {
+    "b1": {
+      "label": "빈칸 1: 정해진 횟수만큼 되풀이하는 낱말",
+      "chars": 6
+    },
+    "b2": {
+      "label": "빈칸 2: 되풀이할 횟수",
+      "chars": 2
+    }
+  },
+  "hints": [
+    "같은 문장을 정해진 횟수만큼 되풀이하는 것은 repeat (n)이에요.",
+    "000은 이미 넣었어요. 001부터 111까지 가려면 몇 번 더 올려야 할까요?",
+    "repeat (7)이에요. 7번 올리면 t=70, 마지막 #10까지 지나 t=80에 끝나요."
+  ],
+  "scene": {
+    "cols": 10,
+    "rows": 6,
+    "gates": [
+      {
+        "id": "or",
+        "label": "OR",
+        "at": [
+          3,
+          2
+        ],
+        "roof": "teal"
+      },
+      {
+        "id": "and",
+        "label": "AND",
+        "at": [
+          6,
+          3
+        ],
+        "roof": "blue"
+      }
+    ],
+    "roads": [
+      {
+        "signal": "A",
+        "cells": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            2,
+            1
+          ],
+          [
+            2,
+            2
+          ]
+        ]
+      },
+      {
+        "signal": "B",
+        "cells": [
+          [
+            0,
+            3
+          ],
+          [
+            1,
+            3
+          ],
+          [
+            2,
+            3
+          ]
+        ]
+      },
+      {
+        "signal": "w",
+        "cells": [
+          [
+            4,
+            2
+          ],
+          [
+            5,
+            2
+          ],
+          [
+            5,
+            3
+          ]
+        ]
+      },
+      {
+        "signal": "C",
+        "cells": [
+          [
+            3,
+            5
+          ],
+          [
+            4,
+            5
+          ],
+          [
+            5,
+            5
+          ],
+          [
+            6,
+            5
+          ],
+          [
+            6,
+            4
+          ]
+        ]
+      },
+      {
+        "signal": "Y",
+        "cells": [
+          [
+            7,
+            3
+          ],
+          [
+            8,
+            3
+          ],
+          [
+            9,
+            3
+          ]
+        ]
+      }
+    ],
+    "houses": [
+      {
+        "signal": "Y",
+        "at": [
+          9,
+          2
+        ]
+      }
+    ]
+  },
+  "bind": {
+    "A": "test.A",
+    "B": "test.B",
+    "C": "test.C",
+    "w": "test.w",
+    "Y": "test.Y"
+  },
+  "check": [
+    {
+      "kind": "covers",
+      "signals": [
+        "A",
+        "B",
+        "C"
+      ]
+    },
+    {
+      "kind": "end",
+      "time": 80
+    }
+  ],
+  "solution": {
+    "b1": "repeat",
+    "b2": "7"
+  }
+}

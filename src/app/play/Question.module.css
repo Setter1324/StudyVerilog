@@ -32,6 +32,11 @@
   cursor: pointer;
 }
 
+/* 낱말 보기(나와요 / 안 나와요)는 본문 글꼴로 */
+.words {
+  font-family: inherit;
+}
+
 .choice input {
   accent-color: var(--accent);
 }

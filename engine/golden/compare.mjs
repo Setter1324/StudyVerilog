@@ -16,6 +16,12 @@ const read = async (p) => {
   }
 };
 
+/**
+ * 알려진 버전 차이(engine/README.md). 비교할 때만 지우고, 신호와 VCD는 그대로 비교한다.
+ * - 네이티브 12.0은 -g2012에서 범위 없는 $dumpvars(1)에 $unit 경고를 찍고, 14.0 devel(wasm)은 찍지 않는다(골든 7, 스테이지 1-14)
+ */
+export const KNOWN_LOG_DIFFS = [/^VCD warning: \$dumpvars: Package \(\$unit\) is not dumpable with VCD\.$/];
+
 /** 경로를 파일 이름만 남기고, 줄 끝 공백과 빈 줄을 정리한다. */
 export function normalizeLog(text) {
   return (text ?? '')
@@ -24,6 +30,13 @@ export function normalizeLog(text) {
     .filter((l) => l !== '')
     .join('\n');
 }
+
+/** 비교용: 알려진 버전 차이 줄을 뺀다 */
+const comparable = (log) =>
+  log
+    .split('\n')
+    .filter((l) => !KNOWN_LOG_DIFFS.some((re) => re.test(l)))
+    .join('\n');
 
 /** $date, $version, $comment 블록을 지우고 공백을 하나로 모은다. */
 export function normalizeVcdText(text) {
@@ -84,7 +97,7 @@ for (const name of cases) {
   const n = await side('native', name);
   const w = await side('wasm', name);
   const compiled = n.status.ok && w.status.ok;
-  const logSame = n.log === w.log;
+  const logSame = comparable(n.log) === comparable(w.log);
   const sigSame =
     !!n.vcd && !!w.vcd && n.vcd.end === w.vcd.end && JSON.stringify(n.vcd.signals) === JSON.stringify(w.vcd.signals);
   const rawSame = !!n.vcdText && normalizeVcdText(n.vcdText) === normalizeVcdText(w.vcdText);
