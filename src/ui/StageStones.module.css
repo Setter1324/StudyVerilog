@@ -1,0 +1,117 @@
+/* 징검다리 (걷기 박자와 상단 바 계획 6.2). 색은 구역 색(--stone = --zone-N)만 쓴다 */
+.nav {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+}
+
+/* 누르는 영역은 폭 28px, 높이 44px (6.4) */
+.hit {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 44px;
+  border-radius: var(--radius-chip);
+  text-decoration: none;
+}
+
+.hit:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.hit:hover .stone {
+  transform: translateY(-2px);
+}
+
+.stone {
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid color-mix(in srgb, var(--stone), transparent 50%);
+  border-radius: 3px;
+  background: var(--surface);
+  transition:
+    transform var(--dur-ui) var(--ease-ui),
+    background var(--dur-ui) var(--ease-ui);
+}
+
+/* 통과: 구역 색으로 채운다. 아래쪽을 조금 어둡게 해 블록처럼 보인다 */
+.done {
+  border-color: var(--stone);
+  background: var(--stone);
+  box-shadow: inset 0 -3px 0 color-mix(in srgb, var(--stone), var(--world-shade) 30%);
+}
+
+/* 지금: 크게 그린다 */
+.now {
+  width: 18px;
+  height: 18px;
+  border-width: 2px;
+  border-color: var(--stone);
+  border-radius: 4px;
+}
+
+/* ▼: 섬 지도의 "지금 위치"와 같은 모양. 위아래로 떠 있다 */
+.marker {
+  position: absolute;
+  top: 1px;
+  left: 50%;
+  width: 10px;
+  height: 8px;
+  fill: var(--accent);
+  transform: translateX(-50%);
+  animation: bob 1.6s ease-in-out infinite;
+}
+
+@keyframes bob {
+  50% {
+    transform: translate(-50%, -3px);
+  }
+}
+
+/* 통과하면 ▼가 앞 칸에서 다음 칸으로 뛴다 */
+.hop {
+  animation: hop 420ms var(--ease-ui) both;
+}
+
+@keyframes hop {
+  0% {
+    transform: translate(calc(-50% - 28px), 0);
+  }
+  50% {
+    transform: translate(calc(-50% - 14px), -10px);
+  }
+  100% {
+    transform: translate(-50%, 0);
+  }
+}
+
+/* 틀리면 지금 칸이 좌우로 두 번 흔들린다 */
+.shake {
+  animation: shake 400ms var(--ease-ui);
+}
+
+@keyframes shake {
+  20%,
+  60% {
+    transform: translateX(-3px);
+  }
+  40%,
+  80% {
+    transform: translateX(3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marker,
+  .hop,
+  .shake {
+    animation: none;
+  }
+}

@@ -152,6 +152,9 @@ export function passingText(spec: SceneSpec, passing: Record<string, Passing>): 
   });
 }
 
+/** 이름표 층(길 이름표, 건물 이름표와 지연 칸)인지. 플레이 화면은 이 층을 걷는 알파카 위에 그린다 */
+export const isLabel = (p: Prim) => p.kind === 'group' && (p.className === 'roadLabel' || p.className === 'gateSign');
+
 /** 길마다 걷는 알파카: 1은 상자, 0은 빈손, x는 안개, z는 아무도 없다 (7.2) */
 export function circuitWalkers(spec: SceneSpec, values: Record<string, string>): WalkPath[] {
   return spec.roads.map((r) => {

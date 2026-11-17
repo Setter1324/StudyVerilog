@@ -8,10 +8,10 @@ import type { Timeline } from '../../sim/types';
 import { buildTimeline, valueAt } from '../../sim/vcd';
 import { STAGES, stageById, stageData, stagesOf, TYPE_NAMES, zoneById, type StageData } from '../../state/content';
 import { useProgress } from '../../state/progress';
-import { Button, Chip, CodeBlank, IconButton, LockedLine, Sheet, Tabs, ZonePin } from '../../ui';
+import { Button, Chip, CodeBlank, IconButton, LockedLine, Sheet, StageStones, SunTrack, Tabs, ZonePin } from '../../ui';
 import { sfx } from '../../audio/sfx';
 import { BEAT_TICKS, beatAt, tickAt, type PlayBase } from '../../world/beat';
-import { buildCircuit, circuitWalkers, passingText } from '../../world/circuit';
+import { buildCircuit, circuitWalkers, isLabel, passingText } from '../../world/circuit';
 import { Walkers } from '../../world/Walkers';
 import { IsoSvg } from '../../world/IsoSvg';
 import { TopBar } from '../TopBar';
@@ -107,10 +107,14 @@ function World({
   const walkers = circuitWalkers(data.scene, values);
   const dusk = timeline !== null && t >= timeline.end;
   const busy = passingText(data.scene, passing);
+  // 이름표는 알파카 위 층에 그린다. 길 가운데에 선 알파카가 이름표와 지연 칸을 가리지 않는다
+  const ground = { ...scene, prims: scene.prims.filter((p) => !isLabel(p)) };
+  const labels = scene.prims.filter(isLabel);
   return (
     <div className={dusk ? `${s.world} ${s.dusk}` : s.world}>
       <IsoSvg
-        scene={scene}
+        scene={ground}
+        top={labels}
         className={s.worldSvg}
         title={`t=${t}의 마을. ${Object.entries(values)
           .map(([k, v]) => `${k}=${v}`)
@@ -149,6 +153,10 @@ export function Play({ id }: { id: string }) {
   const [error, setError] = useState<string | null>(null);
   /** 실행한 코드의 지연(#N), 출력 신호 이름 → 틱 수. 건물에서 지연을 셀 때 쓴다 (걷기 박자 계획 5.3) */
   const [delays, setDelays] = useState<Record<string, number>>({});
+  /** 실행 횟수. 틀릴 때마다 징검다리의 지금 칸을 다시 흔든다 (걷기 박자와 상단 바 계획 6.3) */
+  const [runs, setRuns] = useState(0);
+  /** 이번 실행으로 처음 통과했는지. 징검다리 칸은 해가 진 뒤에 채운다 */
+  const [freshPass, setFreshPass] = useState(false);
 
   useEffect(() => {
     if (meta) open(meta.id);
@@ -273,6 +281,7 @@ export function Play({ id }: { id: string }) {
       return;
     }
     setRunning(true);
+    setRuns((n) => n + 1);
     sfx.run();
     setError(null);
     setPlaying(false);
@@ -293,6 +302,7 @@ export function Play({ id }: { id: string }) {
       const g = gradeStage(data, values, tl);
       setTimeline(tl);
       setVerdict(g);
+      setFreshPass(g.pass && !!meta && !done[meta.id]);
       if (g.pass && meta) pass(meta.id);
       setDismissed(false);
       if (res.timedOut) {
@@ -309,7 +319,7 @@ export function Play({ id }: { id: string }) {
     } finally {
       setRunning(false);
     }
-  }, [data, running, values, meta, pass]);
+  }, [data, running, values, meta, pass, done]);
 
   // Ctrl+Enter로 실행 (3장 원칙 8)
   useEffect(() => {
@@ -370,20 +380,44 @@ export function Play({ id }: { id: string }) {
         : result.log || '(출력 없음)'
       : '실행하면 $monitor와 $display 출력이 여기에 나와요.';
   const failure = verdict?.failures[0];
+  const ended = timeline !== null && t >= end;
+  const dusk = ended;
+  // 이번 실행으로 처음 통과했으면 해가 질 때까지 지금 칸을 채우지 않는다
+  const stoneDone: Record<string, boolean | undefined> = freshPass && !ended ? { ...done, [meta.id]: false } : done;
 
   return (
     <div className={s.page}>
-      <header className={s.bar}>
+      <header className={dusk ? `${s.bar} ${s.barDusk}` : s.bar}>
         <a href="#/stages" className={s.back} aria-label="스테이지 목록으로">
           ‹
         </a>
         <ZonePin zone={zone.id} size="sm" />
         <div className={s.titleBox}>
           <span className={s.crumb}>
-            {zone.name} · {meta.no} · {index} / {zoneStages.length}
+            {zone.name} · {meta.no}
+            <span className={s.count}>
+              {' '}
+              · {index} / {zoneStages.length}
+            </span>
             {done[meta.id] ? ' · 통과' : ''}
+            {meta.types.map((x) => (
+              <span key={x} className={s.typeTag}>
+                {TYPE_NAMES[x] ?? x}
+              </span>
+            ))}
           </span>
           <h1 className={s.title}>{meta.title}</h1>
+        </div>
+        {/* 징검다리: 이 구역의 스테이지. 좁은 화면에서는 숨기고 윗줄에 4 / 15를 되돌린다 (6.2, 6.4) */}
+        <div className={s.stones}>
+          <StageStones
+            stages={zoneStages}
+            current={meta.id}
+            done={stoneDone}
+            zone={zone.id}
+            hop={ended && verdict?.pass}
+            shake={ended && verdict && !verdict.pass ? runs : 0}
+          />
         </div>
         <div className={s.barTools}>
           <IconButton label={sound ? '소리 끄기' : '소리 켜기'} pressed={sound} onClick={() => setSound(!sound)}>
@@ -405,6 +439,14 @@ export function Play({ id }: { id: string }) {
           <Button onClick={() => void run()} disabled={running} className={s.run}>
             {running ? '실행 중' : '실행'}
           </Button>
+        </div>
+        {/* 해의 길: 바의 아래 선. 왼쪽 끝이 t=0, 오른쪽 끝이 $finish (6.2, 6.3) */}
+        <div className={s.sunLine}>
+          <SunTrack
+            state={running ? 'loading' : !timeline ? 'idle' : ended ? 'dusk' : 'time'}
+            value={running ? undefined : end > 0 ? t / end : 0}
+            passed={verdict?.pass}
+          />
         </div>
       </header>
 

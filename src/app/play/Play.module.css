@@ -4,7 +4,7 @@
   min-height: 100dvh;
 }
 
-/* 상단 바 56px (6.1) */
+/* 상단 바 56px (6.1). 아래 선 자리에 해의 길(3px)이 있다 (걷기 박자와 상단 바 계획 6.2) */
 .bar {
   position: sticky;
   top: 0;
@@ -13,9 +13,54 @@
   align-items: center;
   gap: 10px;
   min-height: 56px;
-  padding: 6px clamp(12px, 2vw, 24px);
-  border-bottom: 1px solid var(--hairline);
+  padding: 6px clamp(12px, 2vw, 24px) 9px;
   background: var(--surface);
+  transition: background var(--dur-ui) var(--ease-ui);
+}
+
+/* 해가 지면 바 바탕도 월드와 같은 노을빛이 된다 (6.3) */
+.barDusk {
+  background: color-mix(in srgb, var(--surface), var(--world-flame) 12%);
+}
+
+.sunLine {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+/* 징검다리: 제목과 도구 사이 가운데 */
+.stones {
+  flex: 0 0 auto;
+  margin: 0 auto;
+}
+
+.count {
+  display: none;
+}
+
+.typeTag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 7px;
+  border-radius: var(--radius-pill);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  vertical-align: 1px;
+}
+
+@media (max-width: 1099px) {
+  .stones {
+    display: none;
+  }
+
+  .count {
+    display: inline;
+  }
 }
 
 .back {
@@ -40,14 +85,17 @@
 
 .titleBox {
   display: grid;
+  flex: 0 1 auto;
   min-width: 0;
-  margin-right: auto;
 }
 
 .crumb {
+  overflow: hidden;
   color: var(--muted);
   font-size: 12px;
   font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .title {
@@ -64,6 +112,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-left: auto;
 }
 
 .run {

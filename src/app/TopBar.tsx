@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { stageById } from '../state/content';
 import { useProgress } from '../state/progress';
 import { IconButton } from '../ui';
 import s from './TopBar.module.css';
@@ -24,6 +25,9 @@ export function CubeLogo({ size = 28 }: { size?: number }) {
 export function TopBar({ current }: { current: string }) {
   const sound = useProgress((p) => p.sound);
   const setSound = useProgress((p) => p.setSound);
+  const last = useProgress((p) => p.last);
+  // 홈이 아닌 화면에서는 마지막으로 연 스테이지로 한 번에 돌아간다 (걷기 박자와 상단 바 계획 6.5)
+  const resume = current !== 'home' && last ? stageById(last) : undefined;
   const [dark, setDark] = useState(() => document.documentElement.dataset.theme === 'dark');
 
   useEffect(() => {
@@ -47,6 +51,11 @@ export function TopBar({ current }: { current: string }) {
         ))}
       </nav>
       <div className={s.tools}>
+        {resume && (
+          <a className={s.resume} href={`#/play/${resume.id}`} aria-label={`${resume.no} ${resume.title} 이어서 하기`}>
+            {resume.no} 이어서
+          </a>
+        )}
         <IconButton label={sound ? '소리 끄기' : '소리 켜기'} pressed={sound} onClick={() => setSound(!sound)}>
           <svg viewBox="0 0 20 20" aria-hidden="true">
             <path d="M3 8h3l4-3v10l-4-3H3Z" fill="currentColor" />

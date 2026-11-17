@@ -15,6 +15,7 @@ Verilog 수업을 블록 월드에서 복습하는 정적 웹 사이트. 기준 
 - 모든 변경은 PR로 하고 CI가 통과한 뒤 합친다. `main`은 곧바로 배포된다.
 - 스테이지 JSON에는 `solution`(정답 예시)을 둔다. CI가 엔진으로 정답 예시는 통과, 시작 코드는 실패하는지 본다.
 - `src/runner/iverilog.ts`, `src/sim/*.ts`는 import에 `.ts`를 붙이고 enum 같은 런타임 TS 문법을 쓰지 않는다(Node가 바로 불러온다).
+- 월드의 움직임은 박자 시계 하나(`src/world/beat.ts`)에서 계산한다. 컴포넌트마다 타이머를 두지 않는다(계획서 7.9).
 - 세션에서는 npm이 막혀 로컬 빌드를 못 한다. 확인은 CI로, 화면은 `shots.yml`이 로그에 남기는 스크린샷으로 본다(계획서 0.3).
 - 커밋 머리말: `feat:`, `fix:`, `content:`(스테이지), `engine:`, `docs:`, `chore:`.
 

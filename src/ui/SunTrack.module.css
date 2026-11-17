@@ -1,0 +1,102 @@
+/* 해의 길 (걷기 박자와 상단 바 계획 6.2). 색은 상자색(--val-1), --accent, --success만 쓴다 */
+.track {
+  position: relative;
+  height: 3px;
+  background: var(--hairline);
+}
+
+/* 지나온 만큼 칠한다. 한 틱 길이로 이어 움직여 해가 미끄러지듯 간다 */
+.fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: var(--p);
+  background: var(--val-1);
+  transition: width var(--dur-tick) linear;
+}
+
+.loading .fill {
+  background: var(--accent);
+}
+
+/* 얼마나 받았는지 모르면 좌우로 흐른다 */
+.flow {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 30%;
+  background: var(--accent);
+  animation: flow 1.1s ease-in-out infinite alternate;
+}
+
+@keyframes flow {
+  from {
+    left: 0;
+  }
+  to {
+    left: 70%;
+  }
+}
+
+.sun {
+  position: absolute;
+  top: 50%;
+  left: var(--p);
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 50%;
+  background: var(--val-1);
+  box-shadow:
+    0 0 0 2px var(--surface),
+    0 0 10px color-mix(in srgb, var(--val-1), transparent 40%);
+  transition: left var(--dur-tick) linear;
+}
+
+/* 해가 오른쪽 끝에서 진다 */
+.dusk .sun {
+  animation: set 900ms var(--ease-ui) forwards;
+}
+
+@keyframes set {
+  to {
+    opacity: 0;
+    transform: translateY(5px) scale(0.8);
+  }
+}
+
+/* 통과: 트랙이 한 번 찬다 */
+.passed .fill {
+  background: var(--success);
+  animation: fill 600ms var(--ease-ui);
+}
+
+@keyframes fill {
+  from {
+    width: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fill,
+  .sun {
+    transition: none;
+  }
+
+  .flow {
+    left: 0;
+    width: 100%;
+    opacity: 0.5;
+    animation: none;
+  }
+
+  .dusk .sun {
+    opacity: 0;
+    animation: none;
+  }
+
+  .passed .fill {
+    animation: none;
+  }
+}
