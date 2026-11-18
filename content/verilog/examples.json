@@ -1,0 +1,29 @@
+{
+  "note": "자유 Verilog의 예제 (순차 재생과 게이트 입구 계획 8.1). 강의 예제를 바탕으로 한 초안이고, 문구와 코드는 주찬이 고칠 수 있다.",
+  "examples": [
+    {
+      "id": "assign",
+      "title": "assign으로 OR·AND",
+      "files": {
+        "design.sv": "module gates(input A, input B, input C, output D, output E);\n  assign D = A | B;\n  assign E = D & C;\nendmodule\n",
+        "testbench.sv": "module t_gates;\n  reg A, B, C;\n  wire D, E;\n\n  gates g(.A(A), .B(B), .C(C), .D(D), .E(E));\n\n  initial begin\n    $monitor(\"%3t: A=%b B=%b C=%b D=%b E=%b\", $time, A, B, C, D, E);\n    A = 0; B = 0; C = 0;\n    #10 A = 1;\n    #10 C = 1;\n    #10 A = 0; B = 1;\n    #10 $finish;\n  end\nendmodule\n"
+      }
+    },
+    {
+      "id": "delay",
+      "title": "게이트 지연 #3, #2",
+      "files": {
+        "design.sv": "module delay(input A, input B, input C, output w1, output E);\n  or  #3 (w1, A, B);\n  and #2 (E, w1, C);\nendmodule\n",
+        "testbench.sv": "module t_delay;\n  reg A, B, C;\n  wire w1, E;\n\n  delay d(.A(A), .B(B), .C(C), .w1(w1), .E(E));\n\n  initial begin\n    $monitor(\"%3t: A=%b B=%b C=%b w1=%b E=%b\", $time, A, B, C, w1, E);\n    A = 0; B = 0; C = 1;\n    #10 A = 1;\n    #10 $finish;\n  end\nendmodule\n"
+      }
+    },
+    {
+      "id": "clock",
+      "title": "always로 클럭 만들기",
+      "files": {
+        "design.sv": "// 클럭만 보는 예제라 설계 파일은 비워 둬도 돼요.\n",
+        "testbench.sv": "module t_clock;\n  reg clk;\n\n  initial clk = 0;\n  always #5 clk = ~clk;\n\n  initial begin\n    $monitor(\"%3t: clk=%b\", $time, clk);\n    #40 $finish;\n  end\nendmodule\n"
+      }
+    }
+  ]
+}

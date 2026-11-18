@@ -10,6 +10,7 @@ describe('parseHash', () => {
   it('스테이지 목록과 도감', () => {
     expect(parseHash('#/stages')).toEqual({ name: 'stages' });
     expect(parseHash('#/guide')).toEqual({ name: 'guide' });
+    expect(parseHash('#/free')).toEqual({ name: 'free' });
     expect(parseHash('#/ui')).toEqual({ name: 'ui' });
   });
 

@@ -1,0 +1,146 @@
+/* 자유 Verilog (순차 재생과 게이트 입구 계획 8.1): 왼쪽 에디터, 오른쪽 위 파형, 오른쪽 아래 콘솔 */
+.page {
+  min-height: 100dvh;
+}
+
+.main {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 12px clamp(16px, 3vw, 40px) var(--space-section);
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.title {
+  margin: 8px 0 0;
+  font-size: clamp(28px, 3vw, 40px);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+
+.lede {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.select {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.select:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-areas:
+    'editor wave'
+    'editor console';
+  gap: var(--space-gap);
+  margin-top: 16px;
+}
+
+.editorPane,
+.wavePane,
+.consolePane {
+  min-width: 0;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+
+.editorPane {
+  grid-area: editor;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 12px;
+  background: var(--surface);
+}
+
+.wavePane {
+  grid-area: wave;
+  padding: 12px;
+  background: var(--surface);
+}
+
+.consolePane {
+  grid-area: console;
+  background: var(--code-bg);
+}
+
+.kbd {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.note {
+  margin: 0;
+  padding: 8px;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.time {
+  margin: 6px 0 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.console {
+  margin: 0;
+  padding: 14px 16px;
+  min-height: 200px;
+  max-height: 46vh;
+  overflow: auto;
+  color: var(--code-text);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.consoleErr {
+  color: color-mix(in srgb, var(--danger), var(--code-text) 35%);
+}
+
+.logOn {
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+  border-radius: var(--radius-chip);
+}
+
+/* 좁은 화면: 에디터, 콘솔, 파형 순서로 쌓는다 */
+@media (max-width: 1099px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'editor'
+      'console'
+      'wave';
+  }
+}
