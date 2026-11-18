@@ -135,6 +135,23 @@ interface Cell {
   props: Box[];
 }
 
+/** 한 칸의 상자 그림. 칸 (i, j)의 그리는 순서는 (i + j, i)다 */
+export interface PropGroup {
+  i: number;
+  j: number;
+  prims: Prim[];
+}
+
+export interface Layers {
+  ground: Prim[];
+  props: PropGroup[];
+  over: Prim[];
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
 export interface Rendered {
   prims: Prim[];
   x: number;
@@ -230,6 +247,34 @@ export class Scene {
     });
     this.prop(ox + 0.5, oy + 0.5, out);
     return out;
+  }
+
+  /**
+   * 층을 나눠 그린다: 땅(모든 칸의 바닥), 칸마다 상자 묶음(그리는 순서대로), 위층.
+   * 상자는 위로만 솟아서 바닥을 먼저 다 그려도 render()와 같은 그림이 된다.
+   * 걷는 알파카를 상자 묶음 사이에 끼워 그리는 데 쓴다 (순차 재생 계획 5.5의 앞뒤 층)
+   */
+  renderLayers(pad = 12): Layers {
+    const cells = [...this.cells.values()].sort((a, b) => a.i + a.j - (b.i + b.j) || a.i - b.i);
+    const ground: Prim[] = [...this.under];
+    const props: PropGroup[] = [];
+    for (const c of cells) {
+      ground.push(...c.terrain);
+      if (!c.props.length) continue;
+      const prims: Prim[] = [];
+      for (const b of topo(c.props)) prims.push(...this.boxPrims(b));
+      props.push({ i: c.i, j: c.j, prims });
+    }
+    const b = this.b;
+    return {
+      ground,
+      props,
+      over: [...this.over],
+      x: Math.floor(b.x0 - pad),
+      y: Math.floor(b.y0 - pad),
+      w: Math.ceil(b.x1 - b.x0 + pad * 2),
+      h: Math.ceil(b.y1 - b.y0 + pad * 2),
+    };
   }
 
   render(pad = 12): Rendered {

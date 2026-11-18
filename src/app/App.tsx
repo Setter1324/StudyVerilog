@@ -1,4 +1,5 @@
 import { useEffect, useSyncExternalStore } from 'react';
+import { Free } from './free/Free';
 import { Home } from './Home';
 import { Play } from './play/Play';
 import { parseHash } from './route';
@@ -25,7 +26,9 @@ export function App() {
     case 'stages':
       return <Stages />;
     case 'play':
-      return <Play key={route.id} id={route.id} />;
+      return <Play key={route.id} id={route.id} devMs={route.ms} />;
+    case 'free':
+      return <Free />;
     case 'guide':
       return (
         <>

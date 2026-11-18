@@ -25,6 +25,12 @@
   fill: var(--accent-text);
 }
 
+/* 이번 구간에 바뀐 신호: 이름 밑의 네온 띠. 글자는 --text 그대로 둔다(네온 글자는 흰 바탕에서 대비가 2.9:1) */
+.lit {
+  fill: var(--neon);
+  rx: var(--radius-pill);
+}
+
 .one {
   stroke: var(--text);
   stroke-width: 2;

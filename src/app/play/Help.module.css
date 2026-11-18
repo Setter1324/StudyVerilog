@@ -1,0 +1,148 @@
+/* 도움 칸 (순차 재생과 게이트 입구 계획 7장): 단계 알약 4개와 그 아래 내용 */
+.help {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+}
+
+.steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.step {
+  padding: 4px 12px;
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background var(--dur-ui) var(--ease-ui),
+    border-color var(--dur-ui) var(--ease-ui);
+}
+
+.step:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.step:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* 연 단계: 파란 테두리, 보고 있는 단계: 채운다 */
+.stepOpen {
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.stepOn {
+  background: var(--accent-soft);
+}
+
+.body {
+  display: grid;
+  gap: 8px;
+}
+
+.lede,
+.hint,
+.answer,
+.explain {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.lede {
+  color: var(--muted);
+}
+
+.hintNo {
+  margin-right: 4px;
+  color: var(--accent-text);
+  font-weight: 800;
+}
+
+.solution {
+  display: grid;
+  gap: 8px;
+}
+
+.fileName {
+  margin: 0 0 4px;
+  color: var(--accent-text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.code {
+  max-height: 260px;
+  margin: 0;
+  padding: 6px 0;
+  overflow: auto;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-chip);
+  background: var(--bg);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.line {
+  padding: 0 12px 0 0;
+  white-space: pre;
+}
+
+.no {
+  display: inline-block;
+  width: 3em;
+  padding-right: 10px;
+  color: var(--muted);
+  text-align: right;
+  user-select: none;
+}
+
+/* 채운 빈칸과 바뀐 줄: 색과 굵기를 함께 쓴다 */
+.filled {
+  padding: 0 2px;
+  border-radius: var(--radius-chip);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-weight: 800;
+}
+
+.changed {
+  background: var(--accent-soft);
+  box-shadow: inset 3px 0 0 var(--accent);
+  font-weight: 700;
+}
+
+.answer code {
+  padding: 1px 6px;
+  border-radius: var(--radius-chip);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-family: var(--font-mono);
+  font-weight: 800;
+}
+
+.explain {
+  color: var(--muted);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

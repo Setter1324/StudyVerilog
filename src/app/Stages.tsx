@@ -7,6 +7,7 @@ import { TopBar } from './TopBar';
 /** 스테이지 목록: 구역별 표. 잠그지 않고 순서는 추천만 한다. (최종계획서 2장 결정 6, 4장) */
 export function Stages() {
   const done = useProgress((p) => p.done);
+  const peeked = useProgress((p) => p.peeked);
   return (
     <div className={s.page}>
       <TopBar current="stages" />
@@ -40,7 +41,9 @@ export function Stages() {
                               <Chip key={t}>{TYPE_NAMES[t] ?? t}</Chip>
                             ))}
                           </span>
-                          <span className={s.state}>{done[st.id] ? '✓ 통과' : ''}</span>
+                          <span className={s.state}>
+                            {[done[st.id] ? '✓ 통과' : '', peeked[st.id] ? '정답 봄' : ''].filter(Boolean).join(' · ')}
+                          </span>
                         </a>
                       </li>
                     ))}

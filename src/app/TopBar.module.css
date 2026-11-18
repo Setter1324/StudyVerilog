@@ -33,6 +33,7 @@
 .link {
   display: inline-flex;
   align-items: center;
+  white-space: nowrap;
   min-height: var(--icon-button);
   padding: 0 14px;
   border-radius: var(--radius-pill);
@@ -90,4 +91,16 @@
 .resume:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
+}
+
+/* 좁은 화면: 메뉴 네 개(홈·스테이지·자유 Verilog·도감)가 한 줄에 들어가게 */
+@media (max-width: 420px) {
+  .nav {
+    gap: 0;
+  }
+
+  .link {
+    padding: 0 10px;
+    font-size: 14px;
+  }
 }

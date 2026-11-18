@@ -37,7 +37,11 @@ function go(hash: string) {
 }
 
 /** 이어서 할 스테이지: 마지막으로 연 것, 그 구역을 다 끝냈으면 다음 구역의 첫 스테이지 (5.2) */
-function pickNext(last: string | null, done: Record<string, true>): { stage: StageMeta; firstVisit: boolean; allDone: boolean } {
+function pickNext(
+  last: string | null,
+  done: Record<string, true>,
+  peeked: Record<string, true> = {},
+): { stage: StageMeta; firstVisit: boolean; allDone: boolean } {
   const first = STAGES[0]!;
   if (!last) return { stage: first, firstVisit: true, allDone: false };
   const cur = stageById(last) ?? first;
@@ -46,7 +50,9 @@ function pickNext(last: string | null, done: Record<string, true>): { stage: Sta
     const nextZone = zoneById(cur.zone + 1);
     const nextFirst = nextZone?.ready ? stagesOf(nextZone.id)[0] : undefined;
     if (nextFirst) return { stage: nextFirst, firstVisit: false, allDone: false };
-    return { stage: cur, firstVisit: false, allDone: true };
+    // 다시 풀기: 정답을 보고 통과한 스테이지가 있으면 그것부터 (게이트 입구 계획 7장)
+    const retry = zoneStages.find((st) => peeked[st.id]) ?? cur;
+    return { stage: retry, firstVisit: false, allDone: true };
   }
   return { stage: cur, firstVisit: false, allDone: false };
 }
@@ -72,7 +78,8 @@ function PreviewLine({ text }: { text: string }) {
 function ContinueCard() {
   const last = useProgress((p) => p.last);
   const done = useProgress((p) => p.done);
-  const { stage, firstVisit, allDone } = pickNext(last, done);
+  const peeked = useProgress((p) => p.peeked);
+  const { stage, firstVisit, allDone } = pickNext(last, done, peeked);
   const zone = zoneById(stage.zone)!;
   const zoneStages = stagesOf(zone.id);
   const zoneDone = zoneStages.filter((st) => done[st.id]).length;

@@ -1,28 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import { delaysBySignal, passingAt } from '../src/sim/delays';
-import { beatAt, phaseOf, tickAt, TICK_MS } from '../src/world/beat';
+import { FADE, GAP_MS, GATE_MS, GATE_TICK_MS, WALK_MS } from '../src/world/beat';
 
-describe('재생 시계 (걷기 박자 계획 5.1, 5.2)', () => {
-  it('기준점에서 계산하므로 오차가 쌓이지 않는다', () => {
-    const base = { tick: 0, at: 1000, speed: 1 };
-    expect(tickAt(base, 1000 + 19_200)).toBe(80);
-    expect(tickAt({ ...base, speed: 0.5 }, 1000 + 19_200)).toBe(40);
-    expect(tickAt({ ...base, speed: 2 }, 1000 + 19_200)).toBe(160);
-    // 건너뛰거나 속도를 바꾸면 그 자리에서 기준점을 새로 잡는다
-    expect(tickAt({ tick: 13, at: 5000, speed: 1 }, 5000 + 2 * TICK_MS)).toBe(15);
+describe('대본 시계 (순차 재생 계획 5.3)', () => {
+  it('재생 길이는 틱 수가 아니라 변화의 수가 정한다', () => {
+    // 1-4의 한 구간: 걷기 → OR #3 → 걷기 → AND #2 → 걷기 → 기다림
+    const one = WALK_MS + (GATE_MS + 3 * GATE_TICK_MS) + WALK_MS + (GATE_MS + 2 * GATE_TICK_MS) + WALK_MS + GAP_MS;
+    expect(one).toBe(3650);
   });
 
-  it('틱은 언제나 같은 길이라 #3은 #2의 1.5배다', () => {
-    const base = { tick: 10, at: 0, speed: 1 };
-    const msTo = (tick: number) => ((tick - base.tick) * TICK_MS) / base.speed;
-    expect(msTo(13) - msTo(10)).toBe(720);
-    expect(msTo(15) - msTo(13)).toBe(480);
+  it('#3과 #2는 지연 칸 수로 구분한다: 건물 조각이 한 틱에 150ms씩 길다', () => {
+    expect(GATE_MS + 3 * GATE_TICK_MS - (GATE_MS + 2 * GATE_TICK_MS)).toBe(GATE_TICK_MS);
   });
 
-  it('값이 바뀌는 틱(박자의 배수)에 알파카가 길 가운데(위상 0.5)에 있다', () => {
-    for (const t of [0, 10, 20, 80]) expect(phaseOf(beatAt(t))).toBeCloseTo(0.5, 9);
-    expect(phaseOf(beatAt(5))).toBeCloseTo(0, 9);
-    expect(phaseOf(beatAt(2, 4))).toBeCloseTo(0, 9);
+  it('걷기의 앞 8% 동안 나타난다', () => {
+    expect(FADE).toBe(0.08);
   });
 });
 

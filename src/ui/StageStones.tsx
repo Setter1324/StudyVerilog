@@ -14,6 +14,8 @@ export interface StageStonesProps {
   current: string;
   /** 통과한 스테이지 */
   done: Record<string, boolean | undefined>;
+  /** 정답을 본 스테이지. 칸 가운데에 점을 찍는다(감점은 없다) */
+  peeked?: Record<string, boolean | undefined>;
   zone: ZoneId;
   /** 통과한 순간: ▼가 다음 칸으로 뛴다 */
   hop?: boolean;
@@ -29,7 +31,7 @@ const MOVE: Record<string, number> = { ArrowRight: 1, ArrowLeft: -1 };
  * 징검다리: 구역의 스테이지 수만큼 작은 블록. 통과한 칸은 구역 색으로 채우고, 지금 칸은 크게 그리고 위에 ▼를 단다.
  * Tab 한 번에 묶음에 닿고(지금 칸만 Tab으로 갈 수 있다), 방향키로 칸을 옮긴다. (걷기 박자와 상단 바 계획 6.2, 6.4)
  */
-export function StageStones({ stages, current, done, zone, hop, shake = 0, href = (id) => `#/play/${id}` }: StageStonesProps) {
+export function StageStones({ stages, current, done, peeked = {}, zone, hop, shake = 0, href = (id) => `#/play/${id}` }: StageStonesProps) {
   const row = useRef<HTMLDivElement>(null);
   const at = Math.max(0, stages.findIndex((st) => st.id === current));
   const marker = hop && at + 1 < stages.length ? at + 1 : at;
@@ -50,6 +52,7 @@ export function StageStones({ stages, current, done, zone, hop, shake = 0, href 
         {stages.map((st, i) => {
           const now = i === at;
           const passed = !!done[st.id];
+          const peek = !!peeked[st.id];
           return (
             <a
               key={st.id}
@@ -57,7 +60,7 @@ export function StageStones({ stages, current, done, zone, hop, shake = 0, href 
               className={s.hit}
               tabIndex={now ? 0 : -1}
               aria-current={now ? 'step' : undefined}
-              aria-label={`${st.no} ${st.title}${passed ? ', 통과' : ''}${now ? ', 지금' : ''}`}
+              aria-label={`${st.no} ${st.title}${passed ? ', 통과' : ''}${peek ? ', 정답 봄' : ''}${now ? ', 지금' : ''}`}
               title={`${st.no} ${st.title}`}
               onKeyDown={onKey}
             >
@@ -69,7 +72,9 @@ export function StageStones({ stages, current, done, zone, hop, shake = 0, href 
               <span
                 // 틀릴 때마다 다시 붙여 흔들림을 처음부터 보여 준다
                 key={now ? `now-${shake}` : 'stone'}
-                className={[s.stone, passed ? s.done : '', now ? s.now : '', now && shake > 0 ? s.shake : ''].filter(Boolean).join(' ')}
+                className={[s.stone, passed ? s.done : '', peek ? s.peeked : '', now ? s.now : '', now && shake > 0 ? s.shake : '']
+                  .filter(Boolean)
+                  .join(' ')}
                 aria-hidden="true"
               />
             </a>

@@ -31,9 +31,10 @@ jobs:
           }
           shot home-1366 1366,1500 ''
           shot home-390 390,2400 ''
-          shot ui-1366 1366,1700 '#/ui'
+          shot ui-1366 1366,3200 '#/ui'
           shot play-1366 1366,1000 '#/play/v1-01'
           shot play-390 390,1800 '#/play/v1-01'
+          shot free-1366 1366,1000 '#/free'
       - name: 1-1 풀어 보기 (Playwright, 임시)
         run: |
           mkdir -p /tmp/pw && cd /tmp/pw && npm init -y > /dev/null && npm i --silent playwright@1 && npx playwright install --with-deps chromium > /dev/null

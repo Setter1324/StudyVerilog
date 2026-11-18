@@ -43,8 +43,10 @@ export interface StageData<Scene = unknown> {
   scene: Scene;
   bind: Record<string, string>;
   check: Check[];
-  /** CI가 확인하는 정답 예시. 빈칸 값, 'file:이름' 파일 내용, 'answer' 답 */
+  /** CI가 확인하는 정답 예시. 빈칸 값, 'file:이름' 파일 내용, 'answer' 답. 도움 칸의 정답 보기에도 쓴다 */
   solution?: Record<string, string>;
+  /** 정답 보기의 해설(선택, 한두 문장). 문구는 주찬이 정한다(최종계획서 14.4) */
+  explain?: string;
 }
 
 export const editable = (t: StageType) => t === 'fix' || t === 'convert' || t === 'design';
@@ -141,4 +143,83 @@ function judgeExpr(q: Extract<QuestionSpec, { kind: 'expr' }>, a: string, tl: Ti
     }
   }
   return undefined;
+}
+
+/** 정답 보기에서 보여 줄 것 (순차 재생과 게이트 입구 계획 7장, 도움 칸) */
+export interface SolutionView {
+  /** 빈칸형: 빈칸이 있는 줄을 정답으로 채운 것. filled는 채운 곳 */
+  blankLines: { file: string; no: number; parts: { text: string; filled: boolean }[] }[];
+  /** 고치는 유형(버그 수정, 변환, 설계): 정답 파일 전체와 시작 코드와 다른 줄(1부터) */
+  files: { name: string; lines: string[]; changed: number[] }[];
+  /** 답(예측, 타이밍, 보스) */
+  answer?: string;
+  explain?: string;
+  /** 넣기 단추가 채울 값: 빈칸에 넣기, 에디터에 넣기, 답 고르기 */
+  fillBlanks: Record<string, string>;
+  fillFiles: Record<string, string>;
+  fillAnswer: Record<string, string>;
+}
+
+/** 줄 단위 비교: b의 줄 가운데 a와의 가장 긴 공통 부분에 들지 않는 줄 번호(1부터) */
+export function changedLines(a: string[], b: string[]): number[] {
+  const n = a.length;
+  const m = b.length;
+  const L: number[][] = Array.from({ length: n + 1 }, () => new Array<number>(m + 1).fill(0));
+  for (let i = n - 1; i >= 0; i--)
+    for (let j = m - 1; j >= 0; j--) L[i]![j] = a[i] === b[j] ? L[i + 1]![j + 1]! + 1 : Math.max(L[i + 1]![j]!, L[i]![j + 1]!);
+  const keep = new Set<number>();
+  let i = 0;
+  let j = 0;
+  while (i < n && j < m) {
+    if (a[i] === b[j]) {
+      keep.add(j);
+      i++;
+      j++;
+    } else if (L[i + 1]![j]! >= L[i]![j + 1]!) i++;
+    else j++;
+  }
+  const out: number[] = [];
+  for (let k = 0; k < m; k++) if (!keep.has(k)) out.push(k + 1);
+  return out;
+}
+
+const lines = (text: string) => text.replace(/\n$/, '').split('\n');
+
+/** 스테이지 JSON의 solution에서 정답 보기를 만든다 */
+export function solutionView(data: StageData): SolutionView {
+  const sol = data.solution ?? {};
+  const view: SolutionView = { blankLines: [], files: [], fillBlanks: {}, fillFiles: {}, fillAnswer: {} };
+  if (data.type === 'fill') {
+    for (const [name, f] of Object.entries(data.files)) {
+      lines(f.template).forEach((line, k) => {
+        const pieces = line.split(/(\{\{\w+\}\})/);
+        if (pieces.length === 1) return;
+        view.blankLines.push({
+          file: name,
+          no: k + 1,
+          parts: pieces
+            .filter((x) => x !== '')
+            .map((x) => {
+              const m = /^\{\{(\w+)\}\}$/.exec(x);
+              return m ? { text: sol[m[1]!] ?? '', filled: true } : { text: x, filled: false };
+            }),
+        });
+      });
+    }
+    for (const id of Object.keys(data.blanks ?? {})) if (sol[id] !== undefined) view.fillBlanks[id] = sol[id]!;
+  }
+  if (editable(data.type)) {
+    for (const [name, f] of Object.entries(data.files)) {
+      const text = sol[fileKey(name)];
+      if (text === undefined) continue;
+      view.files.push({ name, lines: lines(text), changed: changedLines(lines(f.template), lines(text)) });
+      view.fillFiles[fileKey(name)] = text;
+    }
+  }
+  if (data.question && sol[ANSWER] !== undefined) {
+    view.answer = sol[ANSWER];
+    view.fillAnswer[ANSWER] = sol[ANSWER]!;
+  }
+  if (data.explain) view.explain = data.explain;
+  return view;
 }
