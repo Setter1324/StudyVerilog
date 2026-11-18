@@ -1,12 +1,27 @@
 import { useEffect, useRef } from 'react';
-import { BLEND_MS } from './beat';
+import { BLEND_MS, type ScriptView } from './beat';
 import type { PropGroup } from './iso';
 import { IsoPrims } from './IsoSvg';
-import { poseAt, standPose, walkersOn, walkerSprite, walkPose, type Dir, type Track, type WalkerKind, type WalkerPose, type WalkPath } from './walkers';
+import {
+  neonSprite,
+  poseAt,
+  standPose,
+  walkersOn,
+  walkerSprite,
+  walkPose,
+  type Dir,
+  type Track,
+  type WalkerKind,
+  type WalkerPose,
+  type WalkPath,
+} from './walkers';
+import st from './Walkers.module.css';
 
 /** 칸 걷기(섬 지도)에서 한 칸을 걷는 시간 (5.5) */
 const SECONDS_PER_CELL = 0.8;
 const DIRS: Dir[] = [0, 1, 2, 3];
+/** 꼬리표를 알파카 발에서 얼마나 위에 띄울지(px). 알파카 머리 위 14px쯤 (순차 재생 계획 6.2) */
+const TAG_LIFT = 46;
 
 /**
  * 걷는 방식.
@@ -41,17 +56,23 @@ const lerpPose = (a: WalkerPose, b: WalkerPose, k: number): WalkerPose => ({
 /** 칸의 그리는 순서: 뒤(i + j가 작은 칸)에서 앞으로, 같으면 i가 작은 칸 먼저. Scene.render와 같다 */
 const depth = (i: number, j: number) => (i + j) * 4096 + i;
 
-/** 대본 시계가 길마다 돌려주는 걷기 진행률(0~1). null이면 문 앞에 선다 */
-export type WalkFrame = (number | null)[];
+/** 대본 시계가 주는 장면. null이면 멈춘 장면이라 모두 문 앞에 서고 네온이 없다 */
+export type ViewClock = (now: number) => ScriptView | null;
+
+/** 길마다 지금 자세: 걷는 중이면 걷는 자세, 아니면 문 앞 */
+const poseOf = (path: Track, v: ScriptView | null, road: number) => {
+  const p = v?.walk[road] ?? null;
+  return p === null ? standPose(path) : walkPose(path, p);
+};
 
 export interface WalkersProps {
   paths: WalkPath[];
   pace?: Pace;
   /**
-   * 대본 시계(trip일 때). 프레임 시각(ms)을 받아 길마다 진행률을 돌려준다.
+   * 대본 시계(trip일 때). 프레임 시각(ms)을 받아 길마다 걷기, 네온을 돌려준다.
    * 함수가 없거나 null을 돌려주면(멈춤) 모두 문 앞에 선다. 플레이 화면이 대본 시계에서 계산해 넘긴다. (순차 재생 계획 5.5)
    */
-  frame?: (now: number) => WalkFrame | null;
+  view?: ViewClock;
   /**
    * 장면의 건물과 집(칸마다 한 묶음, 그리는 순서대로). 주면 알파카를 그 사이에 끼워 그린다.
    * 건물 뒤 칸(뒤 문, 위 문)에 선 알파카가 건물에 가려진다 (순차 재생 계획 5.5의 앞뒤 층)
@@ -62,8 +83,9 @@ export interface WalkersProps {
 /**
  * 길마다 알파카가 걷는다. React는 값이 바뀔 때만 그리고,
  * 움직임은 requestAnimationFrame에서 transform 속성만 바꾼다. 위치는 대본 시계 하나에서 계산한다.
+ * 이번 구간에 바뀐 길의 알파카는 네온 테두리를 두른다(밑에 깐 네온 그림).
  */
-export function Walkers({ paths, pace = 'trip', frame, props = [] }: WalkersProps) {
+export function Walkers({ paths, pace = 'trip', view, props = [] }: WalkersProps) {
   const root = useRef<SVGGElement>(null);
   // 걷다가 멈추면 문 앞으로 이어 간다. 마지막으로 그린 자세를 기억한다(다시 그려져도 남는다)
   const shown = useRef<WalkerPose[]>([]);
@@ -88,6 +110,8 @@ export function Walkers({ paths, pace = 'trip', frame, props = [] }: WalkersProp
     if (!g) return;
     const nodes = Array.from(g.querySelectorAll<SVGGElement>(':scope > g[data-w]'));
     const groups = Array.from(g.querySelectorAll<SVGGElement>(':scope > g[data-p]'));
+    const glows = nodes.map((n) => Array.from(n.querySelectorAll<SVGGElement>('g[data-neon]')));
+    const glowShown: number[] = [];
     const keys = props.map((p) => depth(p.i, p.j));
     // 알파카마다 지금 끼워 둔 자리(앞에 있는 상자 묶음 수). 바뀔 때만 DOM을 옮긴다
     let slots = '';
@@ -109,19 +133,23 @@ export function Walkers({ paths, pace = 'trip', frame, props = [] }: WalkersProp
       });
       for (const el of seq) g.appendChild(el);
     };
-    const draw = (node: SVGGElement, pose: WalkerPose) => {
+    const draw = (node: SVGGElement, pose: WalkerPose, i: number, glow: number) => {
       node.setAttribute('transform', `translate(${pose.x.toFixed(1)} ${pose.y.toFixed(1)})`);
       node.setAttribute('opacity', pose.opacity.toFixed(2));
       // 방향별 그림 중 하나만 보인다
       node.querySelectorAll<SVGGElement>(':scope > g[data-dir]').forEach((d) => {
         d.style.display = d.dataset.dir === String(pose.dir) ? '' : 'none';
       });
+      if (glowShown[i] !== glow) {
+        glowShown[i] = glow;
+        for (const el of glows[i] ?? []) el.setAttribute('opacity', glow.toFixed(2));
+      }
     };
-    if (pace === 'trip' && (!frame || reducedMotion())) {
-      // 멈춘 장면, 움직임 줄이기: 모두 문 앞에 선다. 값이 바뀌면 다시 그려진다
+    if (pace === 'trip' && !view) {
+      // 멈춘 장면: 모두 문 앞에 선다. 값이 바뀌면 다시 그려진다
       nodes.forEach((node, i) => {
         const it = items[i];
-        if (it) draw(node, (shown.current[i] = standPose(it.path)));
+        if (it) draw(node, (shown.current[i] = standPose(it.path)), i, 0);
       });
       place(shown.current);
       mode.current = 'stand';
@@ -130,15 +158,15 @@ export function Walkers({ paths, pace = 'trip', frame, props = [] }: WalkersProp
     if (pace === 'cell' && reducedMotion()) {
       nodes.forEach((node, i) => {
         const it = items[i];
-        if (it) draw(node, poseAt(it.path, it.path.cells.length / 2 + it.offset));
+        if (it) draw(node, poseAt(it.path, it.path.cells.length / 2 + it.offset), i, 0);
       });
       return;
     }
     // 시계는 하나다. 다시 그려져도 알파카가 제자리로 튀지 않고, 길마다 어긋나지 않는다
     let raf = 0;
     const tick = (now: number) => {
-      const f = pace === 'trip' && frame ? frame(now) : null;
-      const m = pace === 'trip' && !f ? 'stand' : 'walk';
+      const v = pace === 'trip' && view ? view(now) : null;
+      const m = pace === 'trip' && !v ? 'stand' : 'walk';
       // 걷다가 멈추면 문 앞으로 미끄러지듯 간다. 출발은 바로 한다(출발 문에서 나타난다)
       if (mode.current === 'walk' && m === 'stand') blend.current = { from: shown.current.slice(), at: now };
       if (m === 'walk') blend.current = null;
@@ -149,16 +177,11 @@ export function Walkers({ paths, pace = 'trip', frame, props = [] }: WalkersProp
       nodes.forEach((node, i) => {
         const it = items[i];
         if (!it) return;
-        let pose: WalkerPose;
-        if (pace === 'cell') pose = poseAt(it.path, now / 1000 / SECONDS_PER_CELL + it.offset);
-        else {
-          const p = f?.[it.road] ?? null;
-          pose = p === null ? standPose(it.path) : walkPose(it.path, p);
-        }
+        let pose = pace === 'cell' ? poseAt(it.path, now / 1000 / SECONDS_PER_CELL + it.offset) : poseOf(it.path, v, it.road);
         const from = b?.from[i];
         if (from && k < 1) pose = lerpPose(from, pose, k * (2 - k));
         shown.current[i] = pose;
-        draw(node, pose);
+        draw(node, pose, i, v && v.trail[it.road] !== null ? v.glow : 0);
       });
       place(shown.current);
       raf = requestAnimationFrame(tick);
@@ -178,11 +201,66 @@ export function Walkers({ paths, pace = 'trip', frame, props = [] }: WalkersProp
         <g key={it.key} data-w="">
           {DIRS.map((d) => (
             <g key={d} data-dir={d}>
+              {pace === 'trip' && (
+                <g data-neon="" opacity={0}>
+                  <IsoPrims prims={neonSprite(it.kind, d)} />
+                </g>
+              )}
               <IsoPrims prims={walkerSprite(it.kind, d)} />
             </g>
           ))}
         </g>
       ))}
+    </g>
+  );
+}
+
+/**
+ * 꼬리표: 건물을 나온 알파카 머리 위에 코드의 지연(#3)을 단다. 알파카와 함께 움직이고 구간이 끝날 때까지 보인다.
+ * 이름표 층보다 위에 그린다(IsoSvg의 overlay). 입력 알파카와 지연이 없는 출력에는 없다 (순차 재생 계획 6.2)
+ * @param text 길마다 꼬리표 글(#3) 또는 null
+ */
+export function WalkerTags({ paths, view, text }: { paths: WalkPath[]; view: ViewClock; text: (string | null)[] }) {
+  const root = useRef<SVGGElement>(null);
+  const tracks: Track[] = paths.map((p) => ({ cells: p.cells, from: p.from, to: p.to }));
+
+  useEffect(() => {
+    const g = root.current;
+    if (!g) return;
+    const tags = Array.from(g.querySelectorAll<SVGGElement>(':scope > g[data-tag]'));
+    let raf = 0;
+    const tick = (now: number) => {
+      const v = view(now);
+      for (const el of tags) {
+        const road = Number(el.dataset.tag);
+        const track = tracks[road];
+        const on = v && track && v.tags[road] ? v.glow : 0;
+        el.setAttribute('opacity', on.toFixed(2));
+        if (on > 0 && track) {
+          const pose = poseOf(track, v, road);
+          el.setAttribute('transform', `translate(${pose.x.toFixed(1)} ${(pose.y - TAG_LIFT).toFixed(1)})`);
+        }
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  });
+
+  return (
+    <g ref={root} aria-hidden="true">
+      {text.map((tx, road) => {
+        if (!tx || !paths[road] || paths[road].kind === null) return null;
+        const w = 12 + tx.length * 8;
+        return (
+          <g key={road} data-tag={road} className={st.tag} opacity={0}>
+            <rect x={-w / 2} y={-10} width={w} height={20} />
+            <text x={0} y={4.5} textAnchor="middle">
+              {tx}
+            </text>
+          </g>
+        );
+      })}
     </g>
   );
 }

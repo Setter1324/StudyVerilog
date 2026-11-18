@@ -1,0 +1,14 @@
+/* 꼬리표: 흰 바탕(--surface), 네온 테두리 2px, 글자는 --text. 네온 바탕에 흰 글자는 대비가 2.9:1이라 쓰지 않는다 (순차 재생 계획 6.2) */
+.tag rect {
+  fill: var(--surface);
+  stroke: var(--neon);
+  stroke-width: 2;
+  rx: var(--radius-chip);
+}
+
+.tag text {
+  fill: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 800;
+}
