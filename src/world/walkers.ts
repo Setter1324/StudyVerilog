@@ -1,6 +1,6 @@
 // 길을 걷는 알파카. 장면(바닥, 건물)은 값이 바뀔 때만 다시 계산하고,
 // 알파카는 미리 만든 그림을 위치만 옮겨 그린다. (최종계획서 5.5, 7.2, 8.1)
-import { FADE, phaseOf, STEPS_PER_BEAT } from './beat';
+import { FADE, STEPS_PER_WALK } from './beat';
 import { Scene, type Prim } from './iso';
 import { alpacaBoxes, fogPrims, questionMark } from './island';
 
@@ -49,6 +49,8 @@ export interface WalkerPose {
   y: number;
   dir: Dir;
   opacity: number;
+  /** 발이 놓인 길 칸. 건물과 앞뒤를 가려 그리는 데 쓴다 */
+  cell: [number, number];
 }
 
 const dirOf = (dx: number, dy: number): Dir => (dx > 0 ? 0 : dy > 0 ? 1 : dx < 0 ? 2 : 3);
@@ -59,7 +61,7 @@ const toTrack = (t: Track | [number, number][]): Track => (Array.isArray(t) ? { 
  * 첫 칸 앞 반 칸에서 나와 마지막 칸 뒤 반 칸으로 들어간다. 그래서 한 번 걷는 거리는 칸 수와 같다.
  * from·to가 있으면 그 칸과 맞닿은 변이 나오고 들어가는 자리다. 없으면 길의 처음·마지막 방향 그대로다.
  */
-function placeAt(t: Track, d: number): { x: number; y: number; dir: Dir } {
+function placeAt(t: Track, d: number): { x: number; y: number; dir: Dir; cell: [number, number] } {
   const c = t.cells;
   const n = c.length;
   const first = c[0]!;
@@ -102,7 +104,9 @@ function placeAt(t: Track, d: number): { x: number; y: number; dir: Dir } {
     dir = dirOf(dx, dy);
   }
   const [x, y] = project(wx, wy);
-  return { x, y, dir };
+  // 칸 가운데를 지나 다음 칸 가장자리(d = k + 1)에서 칸이 바뀐다. 양 끝 반 칸은 첫 칸과 마지막 칸이다
+  const cell = c[Math.max(0, Math.min(n - 1, Math.floor(d)))]!;
+  return { x, y, dir, cell };
 }
 
 /** 칸 걷기(섬 지도): 길 위의 거리 u(칸 단위)에서의 자세. 양 끝 반 칸에서 나타나고 사라진다 */
@@ -110,27 +114,30 @@ export function poseAt(track: Track | [number, number][], u: number): WalkerPose
   const t = toTrack(track);
   const total = t.cells.length;
   const d = ((u % total) + total) % total; // 0..total
-  const { x, y, dir } = placeAt(t, d);
+  const { x, y, dir, cell } = placeAt(t, d);
   const edge = Math.min(d, total - d);
   const opacity = Math.max(0, Math.min(1, edge / 0.5));
   // 걸음마다 살짝 뛴다 (한 칸에 두 걸음)
   const hop = Math.abs(Math.sin(d * Math.PI * 2)) * 2.5;
-  return { x, y: y - hop, dir, opacity };
+  return { x, y: y - hop, dir, opacity, cell };
 }
 
 /**
- * 한 박자 걷기(플레이 장면): 위상 phase에서의 자세. 위상 0에 출발해 1에 도착한다.
- * 길이와 상관없이 한 박자에 걷는다. 긴 길의 알파카는 빨리, 짧은 길의 알파카는 천천히 걷는다.
- * 나타나고 사라지는 것과 걸음도 거리가 아니라 위상으로 센다. (걷기 박자 계획 3.1)
+ * 한 번 걷기(플레이 장면): 진행률 p(0~1)에서의 자세. 출발 문(from 쪽 변)에서 나와 마지막 칸 가운데(문 앞)에 선다.
+ * 길이와 상관없이 같은 시간에 걷는다. 긴 길의 알파카는 빨리, 짧은 길의 알파카는 천천히 걷는다.
+ * 앞 8% 동안 나타나고, 도착해서는 사라지지 않는다. (순차 재생 계획 5.5)
  */
-export function tripPose(track: Track | [number, number][], phase: number): WalkerPose {
+export function walkPose(track: Track | [number, number][], p: number): WalkerPose {
   const t = toTrack(track);
-  const ph = phaseOf(phase);
-  const { x, y, dir } = placeAt(t, ph * t.cells.length);
-  const opacity = Math.max(0, Math.min(1, Math.min(ph, 1 - ph) / FADE));
-  const hop = Math.abs(Math.sin(ph * STEPS_PER_BEAT * Math.PI)) * 2.5;
-  return { x, y: y - hop, dir, opacity };
+  const q = Math.max(0, Math.min(1, p));
+  const { x, y, dir, cell } = placeAt(t, q * (t.cells.length - 0.5));
+  const opacity = Math.min(1, q / FADE);
+  const hop = Math.abs(Math.sin(q * STEPS_PER_WALK * Math.PI)) * 2.5;
+  return { x, y: y - hop, dir, opacity, cell };
 }
+
+/** 문 앞에 선 자세: 마지막 칸 가운데에서 건물 쪽을 본다 */
+export const standPose = (track: Track | [number, number][]) => walkPose(track, 1);
 
 /** 한 길에 걷는 알파카 수: 두 칸에 한 마리, 적어도 한 마리 */
 export const walkersOn = (cells: number) => Math.max(1, Math.floor(cells / 2));

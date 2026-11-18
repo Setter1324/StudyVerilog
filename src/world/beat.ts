@@ -1,38 +1,178 @@
-// 월드의 박자. 플레이 장면의 움직임은 이 파일의 값과 함수에서 계산한다. 컴포넌트마다 타이머를 두지 않는다.
-// 원칙: 거리는 속도가 흡수하고, 시간은 코드만 정한다. (걷기 박자와 상단 바 계획 3장)
+// 대본 시계. 플레이 장면의 모든 움직임은 "대본 위의 위치(ms)" 하나의 함수다. 컴포넌트마다 타이머를 두지 않는다.
+// 원칙: 바뀐 값만, 차례대로, 한 번씩 걷는다. 걷는 동안 시간은 멈추고, 시간은 건물에서 숫자로 읽는다.
+// (순차 재생과 게이트 입구 계획 3장, 5.3)
+import type { Change, Step, Wave } from '../sim/script';
 
-/** 1틱의 재생 길이(ms). 틱은 언제나 같은 길이라 #3은 #2의 1.5배로 보인다 */
-export const TICK_MS = 240;
-/** 한 박자의 틱 수. 수업 테스트벤치가 #10마다 값을 바꾸므로, 값이 한 번 바뀔 때 한 번 걷는다 */
-export const BEAT_TICKS = 10;
-/** 한 박자의 길이(초). 플레이 장면의 모든 길은 길이와 상관없이 출발에서 도착까지 한 박자다 */
-export const BEAT_SECONDS = (TICK_MS * BEAT_TICKS) / 1000;
-/** 한 박자의 걸음 수. 모든 알파카가 발을 맞춘다 */
-export const STEPS_PER_BEAT = 6;
-/** 박자의 앞뒤 이 비율 동안 나타나고 사라진다 */
+/** 물결 하나가 걷는 시간. 길 길이와 상관없다(거리는 속도가 흡수한다) */
+export const WALK_MS = 700;
+/** 건물이 문 앞의 값을 읽는 시간 */
+export const GATE_MS = 250;
+/** 지연 1틱마다 더하는 시간이자 지연 칸 하나가 차는 시간 */
+export const GATE_TICK_MS = 150;
+/** 지연을 이 틱 수까지만 시간에 더한다 */
+export const GATE_TICKS_MAX = 6;
+/** 구간 사이. 시각이 다음 자극 시각까지 넘어간다 */
+export const GAP_MS = 300;
+/** 한 구간의 상한. 넘으면 그 구간만 같은 비율로 줄인다 */
+export const STEP_MAX_MS = 6000;
+/** 한 번 걷는 걸음 수 */
+export const STEPS_PER_WALK = 4;
+/** 걷기의 앞 이 비율 동안 나타난다 */
 export const FADE = 0.08;
+/** 서는 자세로 돌아가는 시간(ms). tokens.css의 --dur-ui와 같다 */
+export const BLEND_MS = 180;
 
-/** 박자 위치(실수) → 위상(0 이상 1 미만) */
-export const phaseOf = (beat: number) => beat - Math.floor(beat);
+export type PieceKind = 'gate' | 'walk' | 'gap';
+
+/** 대본의 조각. 시각 t는 건물에서 한 틱씩 오르고, 걷는 동안 멈추고, 기다림에서 다음 자극까지 넘어간다 */
+export interface Piece {
+  kind: PieceKind;
+  step: number;
+  /** 구간 안의 물결 번호. 기다림은 -1 */
+  wave: number;
+  /** 대본 위의 시작(ms)과 길이 */
+  start: number;
+  dur: number;
+  /** 건물: 값을 읽는 시간(ms). 그 뒤로 시각이 한 틱씩 오른다 */
+  hold: number;
+  /** 조각의 처음과 끝 시각 */
+  t0: number;
+  t1: number;
+}
+
+export interface Layout {
+  steps: Step[];
+  pieces: Piece[];
+  /** 대본 전체 길이(ms) */
+  total: number;
+  /** $finish 시각 */
+  end: number;
+  /** 구간마다 시작 위치(ms) */
+  stepStarts: number[];
+}
 
 /**
- * 재생 시계의 기준점: 재생을 시작한 순간(속도를 바꾸거나 건너뛴 순간도)의 틱과 시각(ms), 속도.
- * 틱마다 타이머를 다시 걸지 않고 이 기준점에서 계산하므로, 늦어진 시간이 다음 틱으로 쌓이지 않는다. (걷기 박자 계획 5.1)
+ * 조각마다 시작 위치를 미리 계산한다.
+ * @param reduced 움직임 줄이기: 걷지 않고 새 값의 알파카가 문 앞에 바로 선다. 걷기 조각은 절반 길이다
  */
+export function layoutScript(steps: Step[], end: number, { reduced = false } = {}): Layout {
+  const pieces: Piece[] = [];
+  const stepStarts: number[] = [];
+  let at = 0;
+  steps.forEach((step, si) => {
+    const own: Omit<Piece, 'start'>[] = [];
+    let prevT = step.start;
+    step.waves.forEach((w, wi) => {
+      if (w.gates.length) {
+        // 시각은 뒤로 가지 않는다: 건물 조각은 max(앞 물결의 시각, t − N)에서 시작한다
+        const delay = Math.max(...w.gates.map((g) => g.delay));
+        const t0 = Math.min(w.t, Math.max(prevT, w.t - delay));
+        const ticks = Math.min(w.t - t0, GATE_TICKS_MAX);
+        own.push({ kind: 'gate', step: si, wave: wi, dur: GATE_MS + GATE_TICK_MS * ticks, hold: GATE_MS, t0, t1: w.t });
+      }
+      own.push({ kind: 'walk', step: si, wave: wi, dur: reduced ? WALK_MS / 2 : WALK_MS, hold: 0, t0: w.t, t1: w.t });
+      prevT = w.t;
+    });
+    own.push({ kind: 'gap', step: si, wave: -1, dur: GAP_MS, hold: 0, t0: prevT, t1: Math.max(prevT, step.end) });
+    const sum = own.reduce((a, p) => a + p.dur, 0);
+    const k = sum > STEP_MAX_MS ? STEP_MAX_MS / sum : 1;
+    stepStarts.push(at);
+    for (const p of own) {
+      pieces.push({ ...p, start: at, dur: p.dur * k, hold: p.hold * k });
+      at += p.dur * k;
+    }
+  });
+  return { steps, pieces, total: at, end, stepStarts };
+}
+
+export interface Frame {
+  /** 조각 번호. 끝이면 pieces.length */
+  piece: number;
+  step: number;
+  /** 구간 안의 물결 번호. 기다림과 끝은 -1 */
+  wave: number;
+  kind: PieceKind | 'end';
+  /** 조각 안의 진행률 0~1 */
+  p: number;
+  /** 화면의 시각 */
+  t: number;
+}
+
+const EPS = 1e-9;
+
+/** 대본 위의 위치 ms에서의 장면 */
+export function frameAt(layout: Layout, ms: number): Frame {
+  const { pieces } = layout;
+  if (!pieces.length || ms >= layout.total) {
+    return { piece: pieces.length, step: Math.max(0, layout.steps.length - 1), wave: -1, kind: 'end', p: 1, t: layout.end };
+  }
+  const x = Math.max(0, ms);
+  // 시작이 x 이하인 마지막 조각
+  let lo = 0;
+  let hi = pieces.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    if (pieces[mid]!.start <= x) lo = mid;
+    else hi = mid - 1;
+  }
+  const pc = pieces[lo]!;
+  const e = x - pc.start;
+  const p = pc.dur > 0 ? Math.min(1, e / pc.dur) : 1;
+  let t = pc.t0;
+  if (pc.kind === 'gate' && pc.t1 > pc.t0) {
+    const rise = pc.dur - pc.hold;
+    const f = rise > 0 ? Math.max(0, Math.min(1, (e - pc.hold) / rise)) : 1;
+    t = pc.t0 + Math.floor((pc.t1 - pc.t0) * f + EPS);
+  } else if (pc.kind === 'gap') {
+    t = pc.t0 + Math.floor((pc.t1 - pc.t0) * p + EPS);
+  }
+  return { piece: lo, step: pc.step, wave: pc.wave, kind: pc.kind, p, t: Math.min(t, pc.t1) };
+}
+
+/** 시각 T까지의 변화가 모두 끝난 자리(ms). 건너뛰기(슬라이더, 파형 클릭)에 쓴다 */
+export function msAtTime(layout: Layout, T: number): number {
+  const { pieces } = layout;
+  if (T >= layout.end) return layout.total;
+  const waveOf = (pc: Piece): Wave | undefined => layout.steps[pc.step]?.waves[pc.wave];
+  // 시각이 T 이하인 물결이 모두 걷고 난 자리
+  let from = 0;
+  pieces.forEach((pc, k) => {
+    if (pc.kind === 'walk' && (waveOf(pc)?.t ?? Infinity) <= T) from = k + 1;
+  });
+  for (let k = from; k < pieces.length; k++) {
+    const pc = pieces[k]!;
+    if (pc.t0 >= T) return pc.start;
+    if (pc.t1 < T) continue;
+    const f = (T - pc.t0) / (pc.t1 - pc.t0);
+    if (pc.kind === 'gate') return pc.start + pc.hold + f * (pc.dur - pc.hold);
+    if (pc.kind === 'gap') return pc.start + f * pc.dur;
+  }
+  return layout.total;
+}
+
+/**
+ * 아직 걷지 않은 물결의 변화. 이 신호들은 시각이 이미 바뀐 때여도 옛 값(from)을 보여 준다.
+ * 지연이 없는 건물(assign)은 입력과 출력이 같은 시각에 바뀌어서, 차례를 시각만으로는 나눌 수 없다.
+ */
+export function pendingChanges(layout: Layout, f: Frame): Change[] {
+  if (f.kind === 'end') return [];
+  const step = layout.steps[f.step];
+  if (!step) return [];
+  const first = f.kind === 'gap' ? step.waves.length : f.kind === 'gate' ? f.wave : f.wave + 1;
+  return step.waves.slice(first).flatMap((w) => (w.t === f.t ? w.changes : []));
+}
+
+/** 지금 걷는 물결(걷기 조각일 때) */
+export function walkingWave(layout: Layout, f: Frame): Wave | null {
+  return f.kind === 'walk' ? (layout.steps[f.step]?.waves[f.wave] ?? null) : null;
+}
+
+/** 재생 시계의 기준점: 재생을 시작한(속도를 바꾸거나 건너뛴) 순간의 대본 위치와 시각(ms), 속도 */
 export interface PlayBase {
-  tick: number;
+  ms: number;
   at: number;
   speed: number;
 }
 
-/** 기준점에서 시각 now(ms)의 틱(실수) */
-export const tickAt = (base: PlayBase, now: number) => base.tick + ((now - base.at) * base.speed) / TICK_MS;
-
-/**
- * 틱(실수) → 박자 위치. 0.5를 더해 값이 바뀌는 틱(박자의 배수)에 알파카가 길 가운데에 있게 한다.
- * 값이 바뀌는 순간이 가장 잘 보이고, 멈췄을 때 서는 자리(위상 0.5)와 같아서 시작과 끝이 매끄럽다. (5.2)
- */
-export const beatAt = (tick: number, beatTicks: number = BEAT_TICKS) => tick / beatTicks + 0.5;
-
-/** 서는 자세와 걷는 자세 사이를 잇는 시간(ms). tokens.css의 --dur-ui와 같다 */
-export const BLEND_MS = 180;
+/** 기준점에서 시각 now의 대본 위치. 매 프레임 기준점에서 계산하므로 늦어진 시간이 쌓이지 않는다 */
+export const posAt = (base: PlayBase, now: number) => base.ms + (now - base.at) * base.speed;

@@ -240,13 +240,45 @@
   box-shadow: var(--focus-ring);
 }
 
-.slider {
+.sliderBox {
+  position: relative;
+  display: flex;
   flex: 1 1 160px;
+  align-items: center;
+}
+
+.slider {
+  flex: 1;
+  min-width: 0;
   accent-color: var(--accent);
+}
+
+/* 구간 경계의 눈금. 슬라이더 손잡이 반지름만큼 양끝을 비운다 */
+.marks {
+  position: absolute;
+  inset: 50% 8px auto;
+  height: 0;
+  pointer-events: none;
+}
+
+.marks span {
+  position: absolute;
+  top: 6px;
+  width: 2px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--muted);
+  transform: translateX(-50%);
+}
+
+.stepNo {
+  color: var(--muted);
+  font-weight: 600;
 }
 
 .time {
   min-width: 4.5em;
+  white-space: nowrap;
   font-family: var(--font-mono);
   font-size: 13px;
   font-weight: 700;
