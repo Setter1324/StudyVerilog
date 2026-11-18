@@ -12,6 +12,7 @@ import { Button, Chip, CodeBlank, IconButton, LockedLine, Sheet, StageStones, Su
 import { sfx } from '../../audio/sfx';
 import { BEAT_TICKS, beatAt, tickAt, type PlayBase } from '../../world/beat';
 import { buildCircuit, circuitWalkers, isLabel, passingText } from '../../world/circuit';
+import { gateOuts } from '../../world/doors';
 import { Walkers } from '../../world/Walkers';
 import { IsoSvg } from '../../world/IsoSvg';
 import { TopBar } from '../TopBar';
@@ -200,10 +201,14 @@ export function Play({ id }: { id: string }) {
     const out: Record<string, Passing> = {};
     if (!timeline || !data) return out;
     for (const g of data.scene.gates) {
-      if (!g.out) continue;
-      const full = data.bind[g.out];
-      const p = passingAt(full ? timeline.signals[full]?.changes : undefined, delays[g.out] ?? 0, t);
-      if (p) out[g.id] = p;
+      // 출력이 여럿이면 가장 늦게 끝나는 출력의 지연 칸을 그린다 (게이트 입구 계획 4.5)
+      for (const sig of gateOuts(g)) {
+        const full = data.bind[sig];
+        const delay = delays[sig] ?? (full ? delays[full.slice(full.lastIndexOf('.') + 1)] : undefined) ?? 0;
+        const p = passingAt(full ? timeline.signals[full]?.changes : undefined, delay, t);
+        const had = out[g.id];
+        if (p && (!had || p.left > had.left)) out[g.id] = p;
+      }
     }
     return out;
   }, [timeline, data, delays, t]);

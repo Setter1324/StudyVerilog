@@ -1,28 +1,29 @@
 import { describe, expect, it } from 'vitest';
 import { BEAT_SECONDS } from '../src/world/beat';
-import { project, tripPose } from '../src/world/walkers';
+import { project, tripPose, type Track } from '../src/world/walkers';
 
-type Cells = [number, number][];
-// 스테이지 1-1의 A(4칸)와 C(5칸): 지금은 길이가 달라 점점 어긋나던 두 길
-const A: Cells = [[0, 1], [1, 1], [2, 1], [2, 2]];
-const C: Cells = [[3, 5], [4, 5], [5, 5], [6, 5], [6, 4]];
+// 스테이지 1-1의 A(4칸)와 C(3칸). A는 OR(3,2)의 위 문, C는 AND(6,3)의 아래 문으로 들어간다
+const A: Track = { cells: [[0, 1], [1, 1], [2, 1], [3, 1]], to: [3, 2] };
+const C: Track = { cells: [[4, 4], [5, 4], [6, 4]], to: [6, 3] };
+// OR의 앞 문에서 나와 AND의 위 문으로 들어가는 D
+const D: Track = { cells: [[4, 2], [5, 2], [6, 2]], from: [3, 2], to: [6, 3] };
 
-/** 길 끝(마지막 칸 뒤 반 칸)의 화면 좌표 = 건물에 닿는 자리 */
-function exitOf(cells: Cells): [number, number] {
-  const a = cells[cells.length - 2]!;
-  const b = cells[cells.length - 1]!;
-  return project(b[0] + 0.5 + (b[0] - a[0]) * 0.5, b[1] + 0.5 + (b[1] - a[1]) * 0.5);
+/** 길 끝 = 문 칸과 도착 건물이 만나는 변의 가운데 (게이트 입구 계획 4.5) */
+function exitOf(t: Track): [number, number] {
+  const b = t.cells[t.cells.length - 1]!;
+  const to = t.to!;
+  return project((b[0] + to[0]) / 2 + 0.5, (b[1] + to[1]) / 2 + 0.5);
 }
 const near = (p: { x: number; y: number }, q: [number, number], tol: number) => Math.hypot(p.x - q[0], p.y - q[1]) <= tol;
 
 describe('한 박자 걷기 (걷기 박자 계획 4장)', () => {
   it('길이가 다른 두 길이 60초 동안 매번 같은 순간에 도착한다', () => {
     // 페이지 시각으로 위상을 구하는 Walkers와 같은 식: 위상 = 초 ÷ 한 박자
-    const arrivals = (cells: Cells) => {
+    const arrivals = (cells: Track) => {
       const out: number[] = [];
       for (let ms = 0; ms <= 60_000; ms += 10) {
         const pose = tripPose(cells, ms / 1000 / BEAT_SECONDS);
-        if (near(pose, exitOf(cells), 4)) out.push(Math.round(ms / 100)); // 0.1초 단위로 묶는다
+        if (near(pose, exitOf(cells), 2)) out.push(Math.round(ms / 100)); // 0.1초 단위로 묶는다
       }
       return [...new Set(out)];
     };
@@ -35,8 +36,8 @@ describe('한 박자 걷기 (걷기 박자 계획 4장)', () => {
     for (const cells of [A, C]) expect(tripPose(cells, 0.5).opacity).toBe(1);
     // 4칸 길은 첫 칸 앞 가장자리(x=0)에서 2칸 걸은 자리, 두 번째 칸과 세 번째 칸의 경계다. 이 순간에는 걸음이 땅에 닿아 있다
     expect(near(tripPose(A, 0.5), project(2, 1.5), 0.01)).toBe(true);
-    // 5칸 길은 2.5칸 걸은 자리, 세 번째 칸의 가운데다
-    expect(near(tripPose(C, 0.5), project(5.5, 5.5), 0.01)).toBe(true);
+    // 3칸 길은 1.5칸 걸은 자리, 두 번째 칸의 가운데다
+    expect(near(tripPose(C, 0.5), project(5.5, 4.5), 0.01)).toBe(true);
   });
 
   it('출발과 도착에서는 투명하다', () => {
@@ -45,20 +46,19 @@ describe('한 박자 걷기 (걷기 박자 계획 4장)', () => {
     expect(tripPose(C, 0.04).opacity).toBeCloseTo(0.5, 5);
   });
 
-  it('스테이지 장면의 길 길이 규칙(2~6칸, 가장 긴 길이 가장 짧은 길의 2.5배 이하)은 경고로 알린다', () => {
-    const stages = import.meta.glob<{ id: string; scene?: { roads: { cells: unknown[] }[] } }>('../content/verilog/stages/*.json', {
-      eager: true,
-      import: 'default',
-    });
-    const warnings: string[] = [];
-    for (const stage of Object.values(stages)) {
-      const lens = (stage.scene?.roads ?? []).map((r) => r.cells.length);
-      if (!lens.length) continue;
-      const lo = Math.min(...lens);
-      const hi = Math.max(...lens);
-      if (lo < 2 || hi > 6 || hi / lo > 2.5) warnings.push(`${stage.id}: 길 길이 ${lens.join(', ')}`);
-    }
-    if (warnings.length) console.warn('길 길이 규칙을 벗어난 장면(속도 차이가 커진다):\n' + warnings.join('\n'));
-    expect(Array.isArray(warnings)).toBe(true);
+  it('마지막 반 칸은 직전 방향이 아니라 건물 쪽으로 꺾는다', () => {
+    // C는 +x로 오다가 마지막 칸 가운데에서 -y(AND 쪽)로 꺾는다
+    expect(tripPose(C, 0.5).dir).toBe(0);
+    expect(tripPose(C, 0.95).dir).toBe(3);
+    expect(near(tripPose(C, 0.9999), exitOf(C), 1)).toBe(true);
+    // D는 +x로 걷다가 AND의 위 문으로 +y
+    expect(tripPose(D, 0.95).dir).toBe(1);
+  });
+
+  it('첫 반 칸은 출발 건물과 맞닿은 변에서 나온다', () => {
+    // D는 OR(3,2)과 첫 칸 (4,2)이 만나는 변 x=4에서 나온다
+    const p = tripPose(D, 0);
+    const [x, y] = project(4, 2.5);
+    expect(Math.hypot(p.x - x, p.y - y)).toBeLessThan(0.01);
   });
 });

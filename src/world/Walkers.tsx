@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { BEAT_SECONDS, BLEND_MS } from './beat';
 import { IsoPrims } from './IsoSvg';
-import { poseAt, tripPose, walkersOn, walkerSprite, type Dir, type WalkerKind, type WalkerPose, type WalkPath } from './walkers';
+import { poseAt, tripPose, walkersOn, walkerSprite, type Dir, type Track, type WalkerKind, type WalkerPose, type WalkPath } from './walkers';
 
 /** 칸 걷기(섬 지도)에서 한 칸을 걷는 시간 (5.5) */
 const SECONDS_PER_CELL = 0.8;
@@ -20,7 +20,7 @@ function reducedMotion() {
 
 interface Item {
   key: string;
-  path: [number, number][];
+  path: Track;
   kind: WalkerKind;
   /** trip이면 위상(0..1), cell이면 칸 수 */
   offset: number;
@@ -61,7 +61,7 @@ export function Walkers({ paths, pace = 'trip', clock }: WalkersProps) {
     const n = p.count ?? (pace === 'trip' ? 1 : walkersOn(p.cells.length));
     return Array.from({ length: n }, (_, k) => ({
       key: `${pi}-${k}`,
-      path: p.cells,
+      path: { cells: p.cells, from: p.from, to: p.to },
       kind,
       offset: pace === 'trip' ? k / n : (k * p.cells.length) / n,
     }));
@@ -86,7 +86,7 @@ export function Walkers({ paths, pace = 'trip', clock }: WalkersProps) {
       nodes.forEach((node, i) => {
         const it = items[i];
         if (!it) return;
-        draw(node, pace === 'trip' ? tripPose(it.path, 0.5 + it.offset) : poseAt(it.path, it.path.length / 2 + it.offset));
+        draw(node, pace === 'trip' ? tripPose(it.path, 0.5 + it.offset) : poseAt(it.path, it.path.cells.length / 2 + it.offset));
       });
       return;
     }

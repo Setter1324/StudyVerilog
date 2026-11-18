@@ -16,6 +16,9 @@ import {
   type SignalValue,
   type ZoneId,
 } from '../ui';
+import { buildCircuit, isLabel } from '../world/circuit';
+import { IsoSvg } from '../world/IsoSvg';
+import { SAMPLE_SCENES } from '../world/samples';
 import s from './UiGallery.module.css';
 
 const VALUES: SignalValue[] = ['1', '0', 'x', 'z'];
@@ -33,7 +36,9 @@ export function UiGallery() {
   return (
     <main className={s.page}>
       <h1 className={s.h1}>컴포넌트</h1>
-      <p className={s.muted}>최종계획서 7.7의 컴포넌트 11개와 플레이 상단 바의 2개. 메뉴에는 없는 개발용 화면이에요.</p>
+      <p className={s.muted}>
+        최종계획서 7.7의 컴포넌트 11개와 플레이 상단 바의 2개, 넓은 건물 견본 3개. 메뉴에는 없는 개발용 화면이에요.
+      </p>
 
       <section className={s.section}>
         <h2 className={s.h2}>Button · IconButton</h2>
@@ -141,6 +146,30 @@ export function UiGallery() {
           <SunTrack state="time" value={0.4} />
           <SunTrack state="dusk" />
           <SunTrack state="dusk" passed />
+        </div>
+      </section>
+
+      <section className={s.section}>
+        <h2 className={s.h2}>넓은 건물과 문</h2>
+        <p className={s.muted}>
+          길이 건물에 닿는 칸이 문이에요. 보이는 면(왼쪽 아래, 오른쪽 아래)에는 문을 그리고, 이름 있는 문에는 이름표를 붙여요. 구역 1에는
+          쓰지 않는 견본이에요(게이트 입구 계획 4.4).
+        </p>
+        <div className={s.scenes}>
+          {SAMPLE_SCENES.map((sample) => {
+            const scene = buildCircuit(sample.scene, sample.values);
+            return (
+              <figure key={sample.id} className={s.sceneCard} data-sample={sample.id}>
+                <IsoSvg
+                  scene={{ ...scene, prims: scene.prims.filter((p) => !isLabel(p)) }}
+                  top={scene.prims.filter(isLabel)}
+                  className={s.sceneSvg}
+                  title={sample.title}
+                />
+                <figcaption className={s.muted}>{sample.title}</figcaption>
+              </figure>
+            );
+          })}
         </div>
       </section>
 

@@ -31,7 +31,7 @@ jobs:
           }
           shot home-1366 1366,1500 ''
           shot home-390 390,2400 ''
-          shot ui-1366 1366,1700 '#/ui'
+          shot ui-1366 1366,3200 '#/ui'
           shot play-1366 1366,1000 '#/play/v1-01'
           shot play-390 390,1800 '#/play/v1-01'
       - name: 1-1 풀어 보기 (Playwright, 임시)
