@@ -33,6 +33,10 @@ describe('정답 보기 solutionView', () => {
     expect(v.fillBlanks).toEqual({ b1: '#2' });
   });
 
+  it('정답 보기의 해설(explain)이 15개 모두 있다', () => {
+    for (const data of all) expect(solutionView(data).explain ? true : false, data.id).toBe(true);
+  });
+
   it('1-3(버그 수정): 고친 줄을 강조한다', () => {
     const data = stages['../content/verilog/stages/v1-03.json']!;
     const v = solutionView(data);

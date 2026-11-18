@@ -17,6 +17,7 @@
     "중간 값은 wire로 선언해요: wire ab, nc;",
     "and (ab, A, B); not (nc, C); or (Y, ab, nc); 처럼 써요."
   ],
+  "explain": "중간 값 ab = A & B와 nc = ~C를 wire로 만들고 OR로 묶으면 Y = (A & B) | ~C가 돼요. assign Y = (A & B) | ~C; 한 줄로 써도 결과가 같아서 정답이에요.",
   "scene": {
     "cols": 9,
     "rows": 6,
