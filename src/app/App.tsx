@@ -25,7 +25,7 @@ export function App() {
     case 'stages':
       return <Stages />;
     case 'play':
-      return <Play key={route.id} id={route.id} />;
+      return <Play key={route.id} id={route.id} devMs={route.ms} />;
     case 'guide':
       return (
         <>

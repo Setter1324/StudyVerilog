@@ -1,6 +1,7 @@
 // 장면 형식과 건물의 문. 길이 건물에 닿는 칸이 문이다. (순차 재생과 게이트 입구 계획 4장)
 // 그리기(circuit.ts), 걷는 길(walkers.ts), 장면 검사(tests/doors.test.ts)가 모두 여기의 gateDoors를 쓴다.
 // 그림 코드를 부르지 않는 순수 함수만 둔다.
+import type { Topology } from '../sim/script';
 
 export type Cell = [number, number];
 
@@ -38,8 +39,6 @@ export interface SceneSpec {
   gates: GateSpec[];
   roads: RoadSpec[];
   houses?: HouseSpec[];
-  /** 박자 길이(틱). 기본 10 */
-  beatTicks?: number;
 }
 
 export interface Port {
@@ -60,6 +59,20 @@ export const isNamed = (p: Ports | undefined) => p !== undefined && typeof p ===
 
 /** 건물이 내보내는 신호들 */
 export const gateOuts = (g: GateSpec) => portList(g.out).map((p) => p.signal);
+
+/** 순차 재생의 단계 계산에 쓰는 연결(계획 5.2). in·out이 없는 건물은 뺀다 */
+export function topologyOf(scene: SceneSpec): Topology {
+  return {
+    gates: scene.gates
+      .filter((g) => g.in !== undefined || g.out !== undefined)
+      .map((g) => ({
+        id: g.id,
+        in: portList(g.in).map((p) => p.signal),
+        out: gateOuts(g),
+        ...(g.trigger ? { trigger: g.trigger } : {}),
+      })),
+  };
+}
 
 export const sizeOf = (g: GateSpec): [number, number] => g.size ?? [1, 1];
 

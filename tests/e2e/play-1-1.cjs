@@ -96,6 +96,15 @@ const { chromium } = require(process.env.PW_PATH || 'playwright');
       await world.waitFor({ timeout: 5000 });
       console.log('world at t=11:', await world.getAttribute('aria-label'));
       await page.screenshot({ path: 'shots/play-1-4-t11.png' });
+      // 대본 위치 고정(개발용): 구간 2에서 w1이 걷는 순간(5,050~5,750ms). 걷는 동안 시각은 t=13에 멈춰 있다
+      await page.evaluate(() => {
+        window.location.hash = '#/play/v1-04?ms=5400';
+      });
+      const frozen = page.getByRole('img', { name: /^t=13의 마을\..*w1=1.*E=0/ });
+      await frozen.waitFor({ timeout: 5000 });
+      console.log('world at ms=5400:', await frozen.getAttribute('aria-label'));
+      await page.waitForTimeout(300);
+      await page.screenshot({ path: 'shots/play-1-4-ms5400.png' });
     });
     await step('no $finish 1-9', async () => {
       await page.goto(base + '#/play/v1-09');
