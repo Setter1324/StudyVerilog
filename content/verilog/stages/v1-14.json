@@ -26,6 +26,7 @@
     "1단계는 맨 위 모듈 t_test의 신호(A, B, C, H)예요. ins_name 건물 안은 2단계예요.",
     "w1은 ins_name 안에 있어서 $dumpvars(1)로는 적히지 않아요. $dumpvars(0)이나 $dumpvars(2)면 적혀요."
   ],
+  "explain": "$dumpvars(1)은 맨 위 모듈 t_test의 신호(A, B, C, H)만 적어요. w1은 ins_name 건물 안(2단계)에 있어서 파형에 나오지 않아요.",
   "scene": {
     "cols": 9,
     "rows": 5,

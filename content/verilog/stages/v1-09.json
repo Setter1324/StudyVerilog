@@ -14,6 +14,7 @@
     "시뮬레이션을 끝내는 것은 $finish예요. 원하는 시각에 부르려면 initial 블록에 지연을 붙여요.",
     "initial #80 $finish; 한 줄을 모듈 안에 더해요."
   ],
+  "explain": "always는 끝없이 돌아서 누군가 $finish를 불러야 시뮬레이션이 끝나요. initial #80 $finish;를 더하면 t=80에 해가 져요.",
   "scene": {
     "cols": 8,
     "rows": 3,
