@@ -182,6 +182,22 @@ const { chromium } = require(process.env.PW_PATH || 'playwright');
       await page.goto(base + '#/stages');
       await page.getByText('정답 봄').first().waitFor({ timeout: 5000 });
     });
+    await step('free (자유 Verilog: 예제 실행)', async () => {
+      await page.goto(base + '#/free');
+      await page.getByRole('link', { name: '자유 Verilog' }).waitFor({ timeout: 5000 });
+      await page.getByRole('combobox', { name: '예제 불러오기' }).selectOption('delay');
+      await page.getByRole('button', { name: '실행', exact: true }).click();
+      await page.getByRole('img', { name: /파형/ }).waitFor({ timeout: 30000 });
+      const log = await page.locator('pre').last().innerText();
+      console.log('free console:', log.replace(/\n+/g, ' | ').slice(0, 200));
+      if (!log.includes('15: A=1 B=0 C=1 w1=1 E=1')) throw new Error('자유 Verilog 예제의 $monitor 출력이 없다');
+      await page.screenshot({ path: 'shots/free.png' });
+      // 새로고침해도 쓰던 코드가 남는다
+      await page.getByLabel('testbench.sv').fill('module t_mine;\n  initial begin\n    $display("hello");\n    $finish;\n  end\nendmodule\n');
+      await page.reload();
+      const kept = await page.getByLabel('testbench.sv').inputValue();
+      if (!kept.includes('t_mine')) throw new Error('새로고침하니 쓰던 코드가 없다');
+    });
     await step('mobile 1-1 (390px, touch)', async () => {
       const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
       const m = await ctx.newPage();
@@ -203,6 +219,12 @@ const { chromium } = require(process.env.PW_PATH || 'playwright');
       await m.getByRole('dialog').waitFor({ timeout: 10000 });
       console.log('mobile dialog:', (await m.getByRole('dialog').innerText()).replace(/\n+/g, ' | '));
       await m.screenshot({ path: 'shots/mobile-result.png' });
+      await m.goto(base + '#/free');
+      await m.getByRole('button', { name: '실행', exact: true }).waitFor({ timeout: 5000 });
+      const freeWide = await m.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+      console.log('mobile free overflow:', freeWide);
+      if (freeWide > 0) throw new Error(`자유 Verilog가 폭 390px에서 가로 스크롤이 ${freeWide}px 생긴다`);
+      await m.screenshot({ path: 'shots/mobile-free.png' });
       await ctx.close();
     });
     console.log('E2E PASS');

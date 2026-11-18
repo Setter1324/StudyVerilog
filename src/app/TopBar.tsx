@@ -7,6 +7,7 @@ import s from './TopBar.module.css';
 const NAV = [
   { href: '#/', label: '홈', name: 'home' },
   { href: '#/stages', label: '스테이지', name: 'stages' },
+  { href: '#/free', label: '자유 Verilog', name: 'free' },
   { href: '#/guide', label: '도감', name: 'guide' },
 ] as const;
 
@@ -21,7 +22,7 @@ export function CubeLogo({ size = 28 }: { size?: number }) {
   );
 }
 
-/** 상단 바: 로고, 메뉴(홈·스테이지·도감), 소리·테마. (최종계획서 5.1) */
+/** 상단 바: 로고, 메뉴(홈·스테이지·자유 Verilog·도감), 소리·테마. (최종계획서 5.1, 게이트 입구 계획 8.1) */
 export function TopBar({ current }: { current: string }) {
   const sound = useProgress((p) => p.sound);
   const setSound = useProgress((p) => p.setSound);
