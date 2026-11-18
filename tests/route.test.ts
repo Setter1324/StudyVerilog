@@ -19,6 +19,13 @@ describe('parseHash', () => {
     expect(parseHash('#/play/v1-04/')).toEqual({ name: 'play', id: 'v1-04' });
   });
 
+  it('?ms=는 대본 위치(개발용)이고 경로와 따로 읽는다', () => {
+    expect(parseHash('#/play/v1-04?ms=5400')).toEqual({ name: 'play', id: 'v1-04', ms: 5400 });
+    expect(parseHash('#/play/v1-04?x=1&ms=12.5')).toEqual({ name: 'play', id: 'v1-04', ms: 12.5 });
+    expect(parseHash('#/play/v1-04?ms=abc')).toEqual({ name: 'play', id: 'v1-04' });
+    expect(parseHash('#/stages?ms=10')).toEqual({ name: 'stages' });
+  });
+
   it('모르는 주소는 notFound', () => {
     expect(parseHash('#/play')).toEqual({ name: 'notFound' });
     expect(parseHash('#/nope')).toEqual({ name: 'notFound' });

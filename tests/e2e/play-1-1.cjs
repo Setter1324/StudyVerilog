@@ -96,6 +96,17 @@ const { chromium } = require(process.env.PW_PATH || 'playwright');
       await world.waitFor({ timeout: 5000 });
       console.log('world at t=11:', await world.getAttribute('aria-label'));
       await page.screenshot({ path: 'shots/play-1-4-t11.png' });
+      // 대본 위치 고정(개발용): 구간 2에서 w1이 걷는 순간(5,050~5,750ms). 걷는 동안 시각은 t=13에 멈춰 있다
+      await page.evaluate(() => {
+        window.location.hash = '#/play/v1-04?ms=5400';
+      });
+      const frozen = page.getByRole('img', { name: /^t=13의 마을\..*w1=1.*E=0/ });
+      await frozen.waitFor({ timeout: 5000 });
+      console.log('world at ms=5400:', await frozen.getAttribute('aria-label'));
+      // 자막과 꼬리표(#3)
+      await page.getByText('OR #3 · 3틱 뒤 t=13에 w1: 0 → 1', { exact: true }).waitFor({ timeout: 5000 });
+      await page.waitForTimeout(300);
+      await page.screenshot({ path: 'shots/play-1-4-ms5400.png' });
     });
     await step('no $finish 1-9', async () => {
       await page.goto(base + '#/play/v1-09');
@@ -139,6 +150,37 @@ const { chromium } = require(process.env.PW_PATH || 'playwright');
       console.log('tabs from stones to run:', tabs);
       if (tabs >= 6) throw new Error('징검다리에서 Tab 몇 번 안에 실행 버튼에 닿아야 한다');
       await page.screenshot({ path: 'shots/play-bar.png' });
+    });
+    await step('1-1 구간 2: 출력이 그대로인 AND (?ms=4600)', async () => {
+      await page.goto(base + '#/play/v1-01');
+      await page.getByLabel('빈칸 1: D를 만드는 연산자').fill('|');
+      await page.getByLabel('빈칸 2: E를 만드는 연산자').fill('&');
+      await page.getByRole('button', { name: '실행', exact: true }).click();
+      await page.getByRole('button', { name: '끝으로' }).waitFor({ timeout: 30000 });
+      await page.waitForTimeout(500);
+      await page.evaluate(() => {
+        window.location.hash = '#/play/v1-01?ms=4600';
+      });
+      await page.getByText('AND · 입력이 바뀌어도 출력(E)은 그대로예요', { exact: true }).waitFor({ timeout: 5000 });
+      await page.waitForTimeout(300);
+      await page.screenshot({ path: 'shots/play-1-1-ms4600.png' });
+    });
+    await step('help 1-8 (키보드로 힌트 1 → 정답 → 빈칸에 넣기)', async () => {
+      await page.goto(base + '#/play/v1-08');
+      const help = page.getByRole('region', { name: '도움' });
+      await help.getByRole('button', { name: '힌트 보기' }).focus();
+      for (let k = 0; k < 4; k++) await page.keyboard.press('Enter'); // 힌트 1, 2, 3, 정답 보기
+      await help.getByRole('button', { name: '빈칸에 넣기' }).waitFor({ timeout: 5000 });
+      const focused = await page.evaluate(() => (document.activeElement?.textContent ?? '').trim());
+      console.log('focus after answer:', focused);
+      await page.keyboard.press('Enter'); // 초점이 옮겨 온 [빈칸에 넣기]
+      const v1 = await page.getByLabel('빈칸 1: 정해진 횟수만큼 되풀이하는 낱말').inputValue();
+      const v2 = await page.getByLabel('빈칸 2: 되풀이할 횟수').inputValue();
+      console.log('filled:', v1, v2);
+      if (v1 !== 'repeat' || v2 !== '7') throw new Error(`빈칸에 넣기가 정답을 넣지 않았다: ${v1}, ${v2}`);
+      await page.screenshot({ path: 'shots/play-help.png' });
+      await page.goto(base + '#/stages');
+      await page.getByText('정답 봄').first().waitFor({ timeout: 5000 });
     });
     await step('free (자유 Verilog: 예제 실행)', async () => {
       await page.goto(base + '#/free');
