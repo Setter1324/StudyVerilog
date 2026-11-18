@@ -20,12 +20,15 @@ interface ProgressState {
   last: string | null;
   /** 통과한 스테이지 id */
   done: Record<string, true>;
+  /** 정답을 본 스테이지 id. 감점이나 잠금은 없고, 목록과 징검다리에 표시하고 다시 풀기에 넣는다 (게이트 입구 계획 7장) */
+  peeked: Record<string, true>;
   sound: boolean;
   /** 스테이지별 작성 중인 빈칸 값 (6.3 자동 저장) */
   drafts: Record<string, Record<string, string>>;
   setDraft: (stage: string, values: Record<string, string>) => void;
   open: (id: string) => void;
   pass: (id: string) => void;
+  peek: (id: string) => void;
   setSound: (on: boolean) => void;
   reset: () => void;
 }
@@ -35,13 +38,15 @@ export const useProgress = create<ProgressState>()(
     (set) => ({
       last: null,
       done: {},
+      peeked: {},
       sound: false,
       drafts: {},
       setDraft: (stage, values) => set((s) => ({ drafts: { ...s.drafts, [stage]: values } })),
       open: (id) => set({ last: id }),
       pass: (id) => set((s) => ({ done: { ...s.done, [id]: true } })),
+      peek: (id) => set((s) => (s.peeked[id] ? s : { peeked: { ...s.peeked, [id]: true } })),
       setSound: (on) => set({ sound: on }),
-      reset: () => set({ last: null, done: {}, drafts: {} }),
+      reset: () => set({ last: null, done: {}, peeked: {}, drafts: {} }),
     }),
     {
       name: 'kwss-progress',

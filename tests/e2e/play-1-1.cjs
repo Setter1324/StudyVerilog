@@ -140,6 +140,23 @@ const { chromium } = require(process.env.PW_PATH || 'playwright');
       if (tabs >= 6) throw new Error('징검다리에서 Tab 몇 번 안에 실행 버튼에 닿아야 한다');
       await page.screenshot({ path: 'shots/play-bar.png' });
     });
+    await step('help 1-8 (키보드로 힌트 1 → 정답 → 빈칸에 넣기)', async () => {
+      await page.goto(base + '#/play/v1-08');
+      const help = page.getByRole('region', { name: '도움' });
+      await help.getByRole('button', { name: '힌트 보기' }).focus();
+      for (let k = 0; k < 4; k++) await page.keyboard.press('Enter'); // 힌트 1, 2, 3, 정답 보기
+      await help.getByRole('button', { name: '빈칸에 넣기' }).waitFor({ timeout: 5000 });
+      const focused = await page.evaluate(() => (document.activeElement?.textContent ?? '').trim());
+      console.log('focus after answer:', focused);
+      await page.keyboard.press('Enter'); // 초점이 옮겨 온 [빈칸에 넣기]
+      const v1 = await page.getByLabel('빈칸 1: 정해진 횟수만큼 되풀이하는 낱말').inputValue();
+      const v2 = await page.getByLabel('빈칸 2: 되풀이할 횟수').inputValue();
+      console.log('filled:', v1, v2);
+      if (v1 !== 'repeat' || v2 !== '7') throw new Error(`빈칸에 넣기가 정답을 넣지 않았다: ${v1}, ${v2}`);
+      await page.screenshot({ path: 'shots/play-help.png' });
+      await page.goto(base + '#/stages');
+      await page.getByText('정답 봄').first().waitFor({ timeout: 5000 });
+    });
     await step('mobile 1-1 (390px, touch)', async () => {
       const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
       const m = await ctx.newPage();
