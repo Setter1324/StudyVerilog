@@ -25,6 +25,25 @@ export function walkerSprite(kind: WalkerKind, dir: Dir): Prim[] {
   return prims;
 }
 
+const NEON = 'var(--neon)';
+
+/**
+ * 네온 테두리용 밑그림: 알파카(와 상자)의 모든 면을 네온 색, 굵기 4px 선으로 칠한다.
+ * 알파카 그림 밑에 깔면 필터 없이 테두리가 생긴다. 안개(x)는 빈손 알파카의 모양을 쓴다 (순차 재생 계획 6.1)
+ */
+export function neonSprite(kind: WalkerKind, dir: Dir): Prim[] {
+  const key = 'n' + kind + dir;
+  const hit = cache.get(key);
+  if (hit) return hit;
+  const S = new Scene();
+  S.local(-0.5, -0.5, 0, alpacaBoxes(kind === '1' ? '1' : '0'), dir);
+  const prims = S.render(0)
+    .prims.filter((p) => p.kind === 'poly')
+    .map((p): Prim => ({ ...p, fill: NEON, stroke: NEON, sw: 4, opacity: undefined, fillOpacity: undefined }));
+  cache.set(key, prims);
+  return prims;
+}
+
 /** 월드 좌표 → 화면 좌표 (Scene과 같은 2:1 투영, 한 칸 64×32) */
 export const project = (x: number, y: number): [number, number] => [(x - y) * 32, (x + y) * 16];
 
@@ -107,6 +126,19 @@ function placeAt(t: Track, d: number): { x: number; y: number; dir: Dir; cell: [
   // 칸 가운데를 지나 다음 칸 가장자리(d = k + 1)에서 칸이 바뀐다. 양 끝 반 칸은 첫 칸과 마지막 칸이다
   const cell = c[Math.max(0, Math.min(n - 1, Math.floor(d)))]!;
   return { x, y, dir, cell };
+}
+
+/** 걷는 길의 화면 좌표: 출발 문(from 쪽 변)에서 칸 가운데들을 지나 마지막 칸 가운데(문 앞)까지. 네온 선에 쓴다 */
+export function trackPoints(track: Track): [number, number][] {
+  const c = track.cells;
+  const first = c[0];
+  if (!first) return [];
+  const [sx, sy] = track.from
+    ? [Math.sign(first[0] - track.from[0]), Math.sign(first[1] - track.from[1])]
+    : c[1]
+      ? [c[1][0] - first[0], c[1][1] - first[1]]
+      : [1, 0];
+  return [project(first[0] + 0.5 - sx * 0.5, first[1] + 0.5 - sy * 0.5), ...c.map(([i, j]) => project(i + 0.5, j + 0.5))];
 }
 
 /** 칸 걷기(섬 지도): 길 위의 거리 u(칸 단위)에서의 자세. 양 끝 반 칸에서 나타나고 사라진다 */

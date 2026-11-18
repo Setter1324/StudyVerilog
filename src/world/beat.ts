@@ -176,3 +176,59 @@ export interface PlayBase {
 
 /** 기준점에서 시각 now의 대본 위치. 매 프레임 기준점에서 계산하므로 늦어진 시간이 쌓이지 않는다 */
 export const posAt = (base: PlayBase, now: number) => base.ms + (now - base.at) * base.speed;
+
+/** 구간이 끝날 때 네온이 꺼지는 시간(ms). --dur-ui와 같다 */
+export const NEON_FADE_MS = 180;
+
+/** 대본 위치에서 월드가 그릴 것: 걷기, 네온, 꼬리표. 길과 건물의 순서는 장면 JSON과 같다 (계획 5.5, 6.1, 6.2) */
+export interface ScriptView {
+  /** 길마다 걷는 진행률(0~1). null이면 문 앞에 선다 */
+  walk: (number | null)[];
+  /** 길마다 네온 선의 진행률. 이번 구간에 걸었으면 1, 걷는 중이면 진행률, 아니면 null */
+  trail: (number | null)[];
+  /** 건물마다 바닥 테두리가 켜졌는지(이번 구간에 지났거나 지나는 중) */
+  gates: boolean[];
+  /** 네온의 세기 0~1. 구간 끝에서 꺼진다 */
+  glow: number;
+  /** 길마다 꼬리표를 보일지(이번 구간에 건물을 나와 걸었거나 걷는 출력) */
+  tags: boolean[];
+}
+
+/**
+ * @param roads 장면의 길마다 신호 이름
+ * @param gateIds 장면의 건물 id
+ * @param reduced 움직임 줄이기: 걷지 않고, 선은 그어지는 움직임 없이 바로 켠다
+ */
+export function scriptView(layout: Layout, ms: number, roads: string[], gateIds: string[], { reduced = false } = {}): ScriptView {
+  const f = frameAt(layout, ms);
+  const none: ScriptView = { walk: roads.map(() => null), trail: roads.map(() => null), gates: gateIds.map(() => false), glow: 0, tags: roads.map(() => false) };
+  if (f.kind === 'end') return none;
+  const step = layout.steps[f.step];
+  if (!step) return none;
+  // 다 걸은 물결, 걷는 물결, 지나는 건물
+  const walked = f.kind === 'gap' ? step.waves.length : f.wave;
+  const done = step.waves.slice(0, walked);
+  const walking = f.kind === 'walk' ? step.waves[f.wave] : undefined;
+  const passing = f.kind === 'gate' || f.kind === 'walk' ? step.waves[f.wave] : undefined;
+  const doneSig = new Set(done.flatMap((w) => w.changes.map((c) => c.signal)));
+  const walkSig = new Set((walking?.changes ?? []).map((c) => c.signal));
+  const outSig = new Set([...done, ...(walking ? [walking] : [])].filter((w) => w.level > 0).flatMap((w) => w.changes.map((c) => c.signal)));
+  const lit = new Set([...done, ...(passing ? [passing] : [])].flatMap((w) => w.gates.map((g) => g.id)));
+  const pc = layout.pieces[f.piece]!;
+  const glow = f.kind === 'gap' ? Math.max(0, Math.min(1, (pc.start + pc.dur - ms) / NEON_FADE_MS)) : 1;
+  return {
+    walk: roads.map((s) => (walkSig.has(s) && !reduced ? f.p : null)),
+    trail: roads.map((s) => (walkSig.has(s) ? (reduced ? 1 : f.p) : doneSig.has(s) ? 1 : null)),
+    gates: gateIds.map((id) => lit.has(id)),
+    glow,
+    tags: roads.map((s) => outSig.has(s)),
+  };
+}
+
+/** 이번 구간에서 지금까지 바뀐 신호(걸었거나 걷는 중). 파형의 줄 이름에 네온을 단다 */
+export function changedSoFar(layout: Layout, f: Frame): Set<string> {
+  const step = layout.steps[f.step];
+  if (f.kind === 'end' || !step) return new Set();
+  const upto = f.kind === 'gap' ? step.waves.length : f.kind === 'walk' ? f.wave + 1 : f.wave;
+  return new Set(step.waves.slice(0, upto).flatMap((w) => w.changes.map((c) => c.signal)));
+}

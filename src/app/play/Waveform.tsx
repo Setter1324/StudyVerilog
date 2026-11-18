@@ -11,6 +11,8 @@ export interface WaveformProps {
   onSeek: (t: number) => void;
   highlight?: string;
   onHover?: (name: string | undefined) => void;
+  /** 이번 구간에 바뀐 신호(재생 중에만). 줄 이름 밑에 네온 띠를 단다 (순차 재생 계획 6.1) */
+  lit?: Set<string>;
 }
 
 const ROW = 34;
@@ -18,7 +20,7 @@ const LABEL = 48;
 const W = 560;
 
 /** 신호별 파형. 1·0은 높고 낮은 선, x는 보라 칸과 글자, z는 가운데 점선. 시간 슬라이더와 같은 시각선 (6.1, 7.2) */
-export function Waveform({ timeline, bind, t, onSeek, highlight, onHover }: WaveformProps) {
+export function Waveform({ timeline, bind, t, onSeek, highlight, onHover, lit }: WaveformProps) {
   const names = Object.keys(bind);
   if (!timeline) {
     return <div className={s.empty}>실행하면 파형이 여기에 그려져요.</div>;
@@ -64,6 +66,7 @@ export function Waveform({ timeline, bind, t, onSeek, highlight, onHover }: Wave
             onPointerEnter={() => onHover?.(name)}
             onPointerLeave={() => onHover?.(undefined)}
           >
+            {lit?.has(name) && <rect x={6} y={mid + 7} width={name.length * 8 + 4} height={3} className={s.lit} />}
             <text x={8} y={mid + 4} className={s.label}>
               {name}
             </text>

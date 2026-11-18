@@ -11,10 +11,25 @@ import { STAGES, stageById, stageData, stagesOf, TYPE_NAMES, zoneById, type Stag
 import { useProgress } from '../../state/progress';
 import { Button, Chip, CodeBlank, IconButton, LockedLine, Sheet, StageStones, SunTrack, Tabs, ZonePin } from '../../ui';
 import { sfx } from '../../audio/sfx';
-import { frameAt, layoutScript, msAtTime, pendingChanges, posAt, walkingWave, type Frame, type Layout, type PlayBase } from '../../world/beat';
+import {
+  changedSoFar,
+  frameAt,
+  layoutScript,
+  msAtTime,
+  pendingChanges,
+  posAt,
+  scriptView,
+  walkingWave,
+  type Frame,
+  type Layout,
+  type PlayBase,
+  type ScriptView,
+} from '../../world/beat';
+import { captionAt } from '../../world/caption';
 import { buildCircuit, circuitWalkers, passingText } from '../../world/circuit';
 import { gateOuts, topologyOf } from '../../world/doors';
-import { Walkers, type WalkFrame } from '../../world/Walkers';
+import { Trail } from '../../world/Trail';
+import { WalkerTags, Walkers, type ViewClock } from '../../world/Walkers';
 import { IsoSvg } from '../../world/IsoSvg';
 import { TopBar } from '../TopBar';
 import s from './Play.module.css';
@@ -93,7 +108,8 @@ function World({
   dusk,
   highlight,
   passing,
-  frame,
+  view,
+  tagText,
 }: {
   data: StageData;
   /** 신호마다 지금 보여 줄 값. 아직 걷지 않은 물결의 신호는 옛 값이다 */
@@ -102,7 +118,9 @@ function World({
   dusk: boolean;
   highlight?: string;
   passing: Record<string, Passing>;
-  frame: (now: number) => WalkFrame | null;
+  view: ViewClock;
+  /** 길마다 꼬리표 글(#3) 또는 null */
+  tagText: (string | null)[];
 }) {
   const scene = buildCircuit(data.scene, values, highlight, passing);
   const walkers = circuitWalkers(data.scene, values);
@@ -114,12 +132,14 @@ function World({
       <IsoSvg
         scene={{ ...scene, prims: scene.ground }}
         top={scene.top}
+        overlay={<WalkerTags paths={walkers} view={view} text={tagText} />}
         className={s.worldSvg}
         title={`t=${t}의 마을. ${Object.entries(values)
           .map(([k, v]) => `${k}=${v}`)
           .join(', ')}${busy.length ? `. ${busy.join(', ')}` : ''}`}
       >
-        <Walkers paths={walkers} frame={frame} props={scene.props} />
+        <Trail scene={data.scene} paths={walkers} view={view} />
+        <Walkers paths={walkers} view={view} props={scene.props} />
       </IsoSvg>
     </div>
   );
@@ -272,16 +292,30 @@ export function Play({ id, devMs }: { id: string; devMs?: number }) {
     document.addEventListener('visibilitychange', onVisibility);
     return () => document.removeEventListener('visibilitychange', onVisibility);
   }, []);
-  /** 월드의 걷기: 재생 중이면 길마다 걷는 진행률, 멈췄으면 null(모두 문 앞에 선다) */
-  const walkFrame = useCallback(
-    (now: number): WalkFrame | null => {
-      if (!layout || !data || reduced) return null;
+  /**
+   * 월드의 대본 시계: 재생 중이면 그 순간의 걷기, 네온, 꼬리표. 멈췄으면 null(모두 문 앞에 서고 네온이 없다).
+   * 알파카, 네온 선, 꼬리표가 같은 프레임에 세 번 부르므로 프레임 시각으로 한 번만 계산한다
+   */
+  const viewCache = useRef<{ now: number; v: ScriptView | null } | null>(null);
+  const view = useCallback(
+    (now: number): ScriptView | null => {
+      if (!layout || !data) return null;
+      const c = viewCache.current;
+      if (c && c.now === now) return c.v;
       const b = base.current;
       const x = b ? Math.min(layout.total, posAt(b, now)) : frozen ? posRef.current : null;
-      if (x === null) return null;
-      const f = frameAt(layout, x);
-      const moving = new Set((walkingWave(layout, f)?.changes ?? []).map((c) => c.signal));
-      return data.scene.roads.map((r) => (moving.has(r.signal) ? f.p : null));
+      const v =
+        x === null
+          ? null
+          : scriptView(
+              layout,
+              x,
+              data.scene.roads.map((r) => r.signal),
+              data.scene.gates.map((g) => g.id),
+              { reduced },
+            );
+      viewCache.current = { now, v };
+      return v;
     },
     [layout, data, frozen, reduced],
   );
@@ -437,6 +471,18 @@ export function Play({ id, devMs }: { id: string; devMs?: number }) {
       : '실행하면 $monitor와 $display 출력이 여기에 나와요.';
   const failure = verdict?.failures[0];
   const dusk = ended;
+  const outs = new Set(data.scene.gates.flatMap(gateOuts));
+  const tagText = data.scene.roads.map((r) => (outs.has(r.signal) && shortDelays[r.signal] ? `#${shortDelays[r.signal]}` : null));
+  const captionLine =
+    layout && frame
+      ? captionAt(
+          layout,
+          frame,
+          data.scene.gates.map((g) => ({ id: g.id, label: g.label, outs: gateOuts(g) })),
+        )
+      : '실행하면 바뀐 값만 차례대로 걸어요.';
+  // 파형의 줄 이름: 재생 중에만 이번 구간에 바뀐 신호를 네온으로 (멈춰서 볼 때는 없다)
+  const litSignals = (isPlaying || frozen) && layout && frame ? changedSoFar(layout, frame) : undefined;
   // 이번 실행으로 처음 통과했으면 해가 질 때까지 지금 칸을 채우지 않는다
   const stoneDone: Record<string, boolean | undefined> = freshPass && !ended ? { ...done, [meta.id]: false } : done;
 
@@ -507,7 +553,11 @@ export function Play({ id, devMs }: { id: string; devMs?: number }) {
 
       <main className={s.grid}>
         <section className={s.worldPane} aria-label="월드">
-          <World data={data} values={shown} t={t} dusk={dusk} highlight={hover} passing={passing} frame={walkFrame} />
+          <World data={data} values={shown} t={t} dusk={dusk} highlight={hover} passing={passing} view={view} tagText={tagText} />
+          {/* 자막: 지금 무엇이 바뀌고 얼마나 걸리는지 한 줄로 (순차 재생 계획 6.3) */}
+          <p className={layout ? s.caption : `${s.caption} ${s.captionIdle}`} aria-live="polite">
+            {captionLine}
+          </p>
           <div className={s.transport}>
             <div className={s.tbtns}>
               <button type="button" className={s.tbtn} onClick={() => seekMs(0)} disabled={!timeline} aria-label="처음으로" title="처음으로">
@@ -634,7 +684,7 @@ export function Play({ id, devMs }: { id: string; devMs?: number }) {
         </section>
 
         <section className={s.wavePane} aria-label="파형">
-          <Waveform timeline={timeline} bind={data.bind} t={t} onSeek={seekTime} highlight={hover} onHover={setHover} />
+          <Waveform timeline={timeline} bind={data.bind} t={t} onSeek={seekTime} highlight={hover} onHover={setHover} lit={litSignals} />
         </section>
 
         <section className={s.consolePane} aria-label="콘솔">
