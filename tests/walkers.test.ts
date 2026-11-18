@@ -35,6 +35,10 @@ describe('한 번 걷기 (순차 재생 계획 5.5)', () => {
     expect(standPose(C).dir).toBe(3); // C는 AND(6,3)의 아래 문: -y
     expect(standPose(D).dir).toBe(1);
     expect(a.opacity).toBe(1);
+    // 발이 놓인 칸: 건물과 앞뒤를 가리는 데 쓴다. A는 OR의 위 문 칸, 건물보다 뒤다
+    expect(a.cell).toEqual([3, 1]);
+    expect(walkPose(D, 0).cell).toEqual([4, 2]);
+    expect(walkPose(D, 0.5).cell).toEqual([5, 2]);
   });
 
   it('출발 문에서 나타나고, 도착해서는 사라지지 않는다', () => {

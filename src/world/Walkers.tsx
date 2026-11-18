@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { BLEND_MS } from './beat';
+import type { PropGroup } from './iso';
 import { IsoPrims } from './IsoSvg';
 import { poseAt, standPose, walkersOn, walkerSprite, walkPose, type Dir, type Track, type WalkerKind, type WalkerPose, type WalkPath } from './walkers';
 
@@ -34,7 +35,11 @@ const lerpPose = (a: WalkerPose, b: WalkerPose, k: number): WalkerPose => ({
   y: lerp(a.y, b.y, k),
   opacity: lerp(a.opacity, b.opacity, k),
   dir: b.dir,
+  cell: b.cell,
 });
+
+/** 칸의 그리는 순서: 뒤(i + j가 작은 칸)에서 앞으로, 같으면 i가 작은 칸 먼저. Scene.render와 같다 */
+const depth = (i: number, j: number) => (i + j) * 4096 + i;
 
 /** 대본 시계가 길마다 돌려주는 걷기 진행률(0~1). null이면 문 앞에 선다 */
 export type WalkFrame = (number | null)[];
@@ -47,13 +52,18 @@ export interface WalkersProps {
    * 함수가 없거나 null을 돌려주면(멈춤) 모두 문 앞에 선다. 플레이 화면이 대본 시계에서 계산해 넘긴다. (순차 재생 계획 5.5)
    */
   frame?: (now: number) => WalkFrame | null;
+  /**
+   * 장면의 건물과 집(칸마다 한 묶음, 그리는 순서대로). 주면 알파카를 그 사이에 끼워 그린다.
+   * 건물 뒤 칸(뒤 문, 위 문)에 선 알파카가 건물에 가려진다 (순차 재생 계획 5.5의 앞뒤 층)
+   */
+  props?: PropGroup[];
 }
 
 /**
  * 길마다 알파카가 걷는다. React는 값이 바뀔 때만 그리고,
  * 움직임은 requestAnimationFrame에서 transform 속성만 바꾼다. 위치는 대본 시계 하나에서 계산한다.
  */
-export function Walkers({ paths, pace = 'trip', frame }: WalkersProps) {
+export function Walkers({ paths, pace = 'trip', frame, props = [] }: WalkersProps) {
   const root = useRef<SVGGElement>(null);
   // 걷다가 멈추면 문 앞으로 이어 간다. 마지막으로 그린 자세를 기억한다(다시 그려져도 남는다)
   const shown = useRef<WalkerPose[]>([]);
@@ -77,6 +87,28 @@ export function Walkers({ paths, pace = 'trip', frame }: WalkersProps) {
     const g = root.current;
     if (!g) return;
     const nodes = Array.from(g.querySelectorAll<SVGGElement>(':scope > g[data-w]'));
+    const groups = Array.from(g.querySelectorAll<SVGGElement>(':scope > g[data-p]'));
+    const keys = props.map((p) => depth(p.i, p.j));
+    // 알파카마다 지금 끼워 둔 자리(앞에 있는 상자 묶음 수). 바뀔 때만 DOM을 옮긴다
+    let slots = '';
+    const place = (poses: (WalkerPose | undefined)[]) => {
+      if (!groups.length) return;
+      const at = poses.map((p) => (p ? keys.filter((k) => k <= depth(p.cell[0], p.cell[1])).length : 0));
+      const sig = at.join(',');
+      if (sig === slots) return;
+      slots = sig;
+      const seq: SVGGElement[] = [];
+      groups.forEach((grp, k) => {
+        nodes.forEach((node, i) => {
+          if (at[i] === k) seq.push(node);
+        });
+        seq.push(grp);
+      });
+      nodes.forEach((node, i) => {
+        if (at[i] === groups.length) seq.push(node);
+      });
+      for (const el of seq) g.appendChild(el);
+    };
     const draw = (node: SVGGElement, pose: WalkerPose) => {
       node.setAttribute('transform', `translate(${pose.x.toFixed(1)} ${pose.y.toFixed(1)})`);
       node.setAttribute('opacity', pose.opacity.toFixed(2));
@@ -91,6 +123,7 @@ export function Walkers({ paths, pace = 'trip', frame }: WalkersProps) {
         const it = items[i];
         if (it) draw(node, (shown.current[i] = standPose(it.path)));
       });
+      place(shown.current);
       mode.current = 'stand';
       return;
     }
@@ -127,6 +160,7 @@ export function Walkers({ paths, pace = 'trip', frame }: WalkersProps) {
         shown.current[i] = pose;
         draw(node, pose);
       });
+      place(shown.current);
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -135,6 +169,11 @@ export function Walkers({ paths, pace = 'trip', frame }: WalkersProps) {
 
   return (
     <g ref={root} aria-hidden="true">
+      {props.map((p) => (
+        <g key={`p${p.i},${p.j}`} data-p="">
+          <IsoPrims prims={p.prims} />
+        </g>
+      ))}
       {items.map((it) => (
         <g key={it.key} data-w="">
           {DIRS.map((d) => (

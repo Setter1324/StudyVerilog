@@ -12,7 +12,7 @@ import { useProgress } from '../../state/progress';
 import { Button, Chip, CodeBlank, IconButton, LockedLine, Sheet, StageStones, SunTrack, Tabs, ZonePin } from '../../ui';
 import { sfx } from '../../audio/sfx';
 import { frameAt, layoutScript, msAtTime, pendingChanges, posAt, walkingWave, type Frame, type Layout, type PlayBase } from '../../world/beat';
-import { buildCircuit, circuitWalkers, isLabel, passingText } from '../../world/circuit';
+import { buildCircuit, circuitWalkers, passingText } from '../../world/circuit';
 import { gateOuts, topologyOf } from '../../world/doors';
 import { Walkers, type WalkFrame } from '../../world/Walkers';
 import { IsoSvg } from '../../world/IsoSvg';
@@ -107,20 +107,19 @@ function World({
   const scene = buildCircuit(data.scene, values, highlight, passing);
   const walkers = circuitWalkers(data.scene, values);
   const busy = passingText(data.scene, passing);
-  // 이름표는 알파카 위 층에 그린다. 걷거나 문 앞에 선 알파카가 이름표와 지연 칸을 가리지 않는다
-  const ground = { ...scene, prims: scene.prims.filter((p) => !isLabel(p)) };
-  const labels = scene.prims.filter(isLabel);
+  // 층: 땅 → 건물과 알파카(칸 순서대로 섞는다) → 이름표. 걷거나 문 앞에 선 알파카가 이름표와 지연 칸을 가리지 않고,
+  // 건물 뒤 칸에 선 알파카는 건물에 가려진다 (순차 재생 계획 5.5)
   return (
     <div className={dusk ? `${s.world} ${s.dusk}` : s.world}>
       <IsoSvg
-        scene={ground}
-        top={labels}
+        scene={{ ...scene, prims: scene.ground }}
+        top={scene.top}
         className={s.worldSvg}
         title={`t=${t}의 마을. ${Object.entries(values)
           .map(([k, v]) => `${k}=${v}`)
           .join(', ')}${busy.length ? `. ${busy.join(', ')}` : ''}`}
       >
-        <Walkers paths={walkers} frame={frame} />
+        <Walkers paths={walkers} frame={frame} props={scene.props} />
       </IsoSvg>
     </div>
   );
@@ -201,11 +200,17 @@ export function Play({ id, devMs }: { id: string; devMs?: number }) {
     for (const [short, full] of Object.entries(data.bind)) shown[short] = timeline ? valueAt(timeline.signals[full], t) : 'x';
     if (layout && frame) for (const c of pendingChanges(layout, frame)) shown[c.signal] = c.from;
   }
-  /** 건물마다 지금 출력을 바꾸는 중인지: 코드의 지연(#N)과 타임라인의 변화로 센다. 표시용이다 (걷기 박자 계획 5.3) */
+  /**
+   * 건물마다 지금 출력을 바꾸는 중인지: 코드의 지연(#N)과 타임라인의 변화로 센다. 표시용이다 (걷기 박자 계획 5.3)
+   * 건물 조각에 있는 건물만 센다. 앞 물결이 걷는 동안에는 다음 건물이 아직 문 앞의 값을 읽지 않았다
+   */
+  const counting = frame?.kind === 'gate' ? (layout?.steps[frame.step]?.waves[frame.wave]?.gates.map((g) => g.id).join(' ') ?? '') : '';
   const passing = useMemo(() => {
     const out: Record<string, Passing> = {};
     if (!timeline || !data) return out;
+    const active = new Set(counting.split(' '));
     for (const g of data.scene.gates) {
+      if (!active.has(g.id)) continue;
       // 출력이 여럿이면 가장 늦게 끝나는 출력의 지연 칸을 그린다 (게이트 입구 계획 4.5)
       for (const sig of gateOuts(g)) {
         const full = data.bind[sig];
@@ -215,7 +220,7 @@ export function Play({ id, devMs }: { id: string; devMs?: number }) {
       }
     }
     return out;
-  }, [timeline, data, shortDelays, t]);
+  }, [timeline, data, shortDelays, t, counting]);
 
   // 재생 시계: 기준점(재생을 시작하거나 속도를 바꾼 순간의 대본 위치와 시각)에서 지금 위치를 계산한다.
   // 프레임마다 타이머를 다시 걸지 않으니 늦어진 시간이 쌓이지 않는다. 화면의 시각이나 조각이 바뀔 때만 setPos를 부른다.

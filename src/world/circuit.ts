@@ -2,7 +2,7 @@
 // 장면은 스테이지 JSON의 scene에서 온다. 값만 시뮬레이션(타임라인)에서 가져온다.
 import type { Passing } from '../sim/delays';
 import { gateCells, gateDoors, roadEnds, sizeOf, type Door, type SceneSpec } from './doors';
-import { faces, onLeft, onRight, Scene, type Deco, type Prim, type Rendered } from './iso';
+import { faces, onLeft, onRight, Scene, type Deco, type Prim, type PropGroup, type Rendered } from './iso';
 import { C } from './island';
 import type { WalkPath } from './walkers';
 
@@ -14,6 +14,16 @@ const MAX_CELLS = 6;
 const ROOF = { teal: C.roofTeal, blue: C.roofBlue, gray: C.roofGray } as const;
 const f1 = (x: number) => +x.toFixed(1);
 
+/** 장면 그림. prims는 한 장으로 그린 것이고, ground·props·top은 걷는 알파카를 건물 사이에 끼워 그리는 층이다 */
+export interface CircuitRender extends Rendered {
+  /** 땅과 길 */
+  ground: Prim[];
+  /** 칸마다 건물과 집. 그리는 순서대로 */
+  props: PropGroup[];
+  /** 이름표 층(길 이름표, 건물 이름표와 지연 칸, 문 이름표) */
+  top: Prim[];
+}
+
 /**
  * @param values 신호 이름 → 그 시각의 값 ('1', '0', 'x', 'z', 벡터는 첫 글자만 본다)
  * @param highlight 강조할 신호 (코드에서 마우스를 올린 신호)
@@ -24,7 +34,7 @@ export function buildCircuit(
   values: Record<string, string>,
   highlight?: string,
   passing: Record<string, Passing> = {},
-): Rendered {
+): CircuitRender {
   const S = new Scene();
   const road = new Map<string, string>(); // "i,j" → signal
   for (const r of spec.roads) for (const [i, j] of r.cells) road.set(`${i},${j}`, r.signal);
@@ -166,7 +176,17 @@ export function buildCircuit(
     });
   }
   S.over.push(...labels);
-  return S.render(28);
+  const L = S.renderLayers(28);
+  return {
+    prims: [...L.ground, ...L.props.flatMap((p) => p.prims), ...L.over],
+    ground: L.ground,
+    props: L.props,
+    top: L.over,
+    x: L.x,
+    y: L.y,
+    w: L.w,
+    h: L.h,
+  };
 }
 
 /** 이름 있는 문의 이름표를 변에서 문 칸 쪽으로 얼마나 내놓을지(칸 단위). 보이는 면과 가려지는 면 */

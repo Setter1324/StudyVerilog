@@ -49,6 +49,8 @@ export interface WalkerPose {
   y: number;
   dir: Dir;
   opacity: number;
+  /** 발이 놓인 길 칸. 건물과 앞뒤를 가려 그리는 데 쓴다 */
+  cell: [number, number];
 }
 
 const dirOf = (dx: number, dy: number): Dir => (dx > 0 ? 0 : dy > 0 ? 1 : dx < 0 ? 2 : 3);
@@ -59,7 +61,7 @@ const toTrack = (t: Track | [number, number][]): Track => (Array.isArray(t) ? { 
  * 첫 칸 앞 반 칸에서 나와 마지막 칸 뒤 반 칸으로 들어간다. 그래서 한 번 걷는 거리는 칸 수와 같다.
  * from·to가 있으면 그 칸과 맞닿은 변이 나오고 들어가는 자리다. 없으면 길의 처음·마지막 방향 그대로다.
  */
-function placeAt(t: Track, d: number): { x: number; y: number; dir: Dir } {
+function placeAt(t: Track, d: number): { x: number; y: number; dir: Dir; cell: [number, number] } {
   const c = t.cells;
   const n = c.length;
   const first = c[0]!;
@@ -102,7 +104,9 @@ function placeAt(t: Track, d: number): { x: number; y: number; dir: Dir } {
     dir = dirOf(dx, dy);
   }
   const [x, y] = project(wx, wy);
-  return { x, y, dir };
+  // 칸 가운데를 지나 다음 칸 가장자리(d = k + 1)에서 칸이 바뀐다. 양 끝 반 칸은 첫 칸과 마지막 칸이다
+  const cell = c[Math.max(0, Math.min(n - 1, Math.floor(d)))]!;
+  return { x, y, dir, cell };
 }
 
 /** 칸 걷기(섬 지도): 길 위의 거리 u(칸 단위)에서의 자세. 양 끝 반 칸에서 나타나고 사라진다 */
@@ -110,12 +114,12 @@ export function poseAt(track: Track | [number, number][], u: number): WalkerPose
   const t = toTrack(track);
   const total = t.cells.length;
   const d = ((u % total) + total) % total; // 0..total
-  const { x, y, dir } = placeAt(t, d);
+  const { x, y, dir, cell } = placeAt(t, d);
   const edge = Math.min(d, total - d);
   const opacity = Math.max(0, Math.min(1, edge / 0.5));
   // 걸음마다 살짝 뛴다 (한 칸에 두 걸음)
   const hop = Math.abs(Math.sin(d * Math.PI * 2)) * 2.5;
-  return { x, y: y - hop, dir, opacity };
+  return { x, y: y - hop, dir, opacity, cell };
 }
 
 /**
@@ -126,10 +130,10 @@ export function poseAt(track: Track | [number, number][], u: number): WalkerPose
 export function walkPose(track: Track | [number, number][], p: number): WalkerPose {
   const t = toTrack(track);
   const q = Math.max(0, Math.min(1, p));
-  const { x, y, dir } = placeAt(t, q * (t.cells.length - 0.5));
+  const { x, y, dir, cell } = placeAt(t, q * (t.cells.length - 0.5));
   const opacity = Math.min(1, q / FADE);
   const hop = Math.abs(Math.sin(q * STEPS_PER_WALK * Math.PI)) * 2.5;
-  return { x, y: y - hop, dir, opacity };
+  return { x, y: y - hop, dir, opacity, cell };
 }
 
 /** 문 앞에 선 자세: 마지막 칸 가운데에서 건물 쪽을 본다 */
