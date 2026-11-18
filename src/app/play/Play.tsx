@@ -220,6 +220,17 @@ export function Play({ id, devMs }: { id: string; devMs?: number }) {
     for (const [short, full] of Object.entries(data.bind)) shown[short] = timeline ? valueAt(timeline.signals[full], t) : 'x';
     if (layout && frame) for (const c of pendingChanges(layout, frame)) shown[c.signal] = c.from;
   }
+  // 대본에서 읽는 것은 여기서 다 읽는다(React Compiler가 아래 useMemo의 의존값을 지킬 수 있게)
+  const captionLine =
+    data && layout && frame
+      ? captionAt(
+          layout,
+          frame,
+          data.scene.gates.map((g) => ({ id: g.id, label: g.label, outs: gateOuts(g) })),
+        )
+      : '실행하면 바뀐 값만 차례대로 걸어요.';
+  // 파형의 줄 이름: 재생 중에만 이번 구간에 바뀐 신호를 네온으로 (멈춰서 볼 때는 없다)
+  const litSignals = (isPlaying || frozen) && layout && frame ? changedSoFar(layout, frame) : undefined;
   /**
    * 건물마다 지금 출력을 바꾸는 중인지: 코드의 지연(#N)과 타임라인의 변화로 센다. 표시용이다 (걷기 박자 계획 5.3)
    * 건물 조각에 있는 건물만 센다. 앞 물결이 걷는 동안에는 다음 건물이 아직 문 앞의 값을 읽지 않았다
@@ -473,16 +484,7 @@ export function Play({ id, devMs }: { id: string; devMs?: number }) {
   const dusk = ended;
   const outs = new Set(data.scene.gates.flatMap(gateOuts));
   const tagText = data.scene.roads.map((r) => (outs.has(r.signal) && shortDelays[r.signal] ? `#${shortDelays[r.signal]}` : null));
-  const captionLine =
-    layout && frame
-      ? captionAt(
-          layout,
-          frame,
-          data.scene.gates.map((g) => ({ id: g.id, label: g.label, outs: gateOuts(g) })),
-        )
-      : '실행하면 바뀐 값만 차례대로 걸어요.';
-  // 파형의 줄 이름: 재생 중에만 이번 구간에 바뀐 신호를 네온으로 (멈춰서 볼 때는 없다)
-  const litSignals = (isPlaying || frozen) && layout && frame ? changedSoFar(layout, frame) : undefined;
+
   // 이번 실행으로 처음 통과했으면 해가 질 때까지 지금 칸을 채우지 않는다
   const stoneDone: Record<string, boolean | undefined> = freshPass && !ended ? { ...done, [meta.id]: false } : done;
 
