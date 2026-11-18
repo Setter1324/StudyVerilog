@@ -120,12 +120,15 @@ export function buildCircuit(
     const p = passing[g.id];
     if (p) sign.push(...delayCells(sx, sy + 7, p));
     S.over.push({ kind: 'group', id: `gate-${g.id}`, className: 'gateSign', children: sign });
-    // 이름 있는 문의 이름표: 문 칸과 건물이 만나는 변 바로 바깥. 가려지는 면의 문도 이름표는 보인다
+    // 이름 있는 문의 이름표: 문 칸과 건물이 만나는 변 바로 바깥. 보이는 면(아래, 앞)은 땅에,
+    // 가려지는 면(위, 뒤)은 지붕 높이에 적어 지붕 모서리 바깥에 뜨게 한다. 가려지는 면의 문도 이름표는 보인다
     for (const d of doors) {
       if (!d.port) continue;
-      const mx = (d.cell[0] + d.inner[0]) / 2 + 0.5 + (d.cell[0] - d.inner[0]) * DOOR_LABEL_OUT;
-      const my = (d.cell[1] + d.inner[1]) / 2 + 0.5 + (d.cell[1] - d.inner[1]) * DOOR_LABEL_OUT;
-      const [lx, ly] = S.P(mx, my, 0.05);
+      const hidden = d.face === 'top' || d.face === 'back';
+      const out = hidden ? DOOR_LABEL_OUT_HIDDEN : DOOR_LABEL_OUT;
+      const mx = (d.cell[0] + d.inner[0]) / 2 + 0.5 + (d.cell[0] - d.inner[0]) * out;
+      const my = (d.cell[1] + d.inner[1]) / 2 + 0.5 + (d.cell[1] - d.inner[1]) * out;
+      const [lx, ly] = S.P(mx, my, hidden ? 0.96 : 0.05);
       S.over.push({
         kind: 'group',
         id: `door-${g.id}-${d.port}`,
@@ -144,11 +147,14 @@ export function buildCircuit(
     ]);
   }
 
-  // 길마다 이름표
+  // 길마다 이름표. 이름 있는 문에서 시작하는 길은 문 이름표와 겹치지 않게 둘째 칸에 적는다
+  const namedDoorCells = new Set(
+    spec.gates.flatMap((g) => gateDoors(spec, g).filter((d) => d.port !== null).map((d) => `${d.cell[0]},${d.cell[1]}`)),
+  );
   const labels: Prim[] = [];
   for (const r of spec.roads) {
     const v = (values[r.signal] ?? 'x')[0] ?? 'x';
-    const first = r.cells[0]!;
+    const first = (namedDoorCells.has(`${r.cells[0]![0]},${r.cells[0]![1]}`) && r.cells[1]) || r.cells[0]!;
     const [lx, ly] = S.P(first[0] + 0.5, first[1] + 0.5, 0.15);
     labels.push({
       kind: 'group',
@@ -163,8 +169,9 @@ export function buildCircuit(
   return S.render(28);
 }
 
-/** 이름 있는 문의 이름표를 변에서 문 칸 쪽으로 얼마나 내놓을지(칸 단위) */
+/** 이름 있는 문의 이름표를 변에서 문 칸 쪽으로 얼마나 내놓을지(칸 단위). 보이는 면과 가려지는 면 */
 const DOOR_LABEL_OUT = 0.22;
+const DOOR_LABEL_OUT_HIDDEN = 0.3;
 
 /** 보이는 면(아래, 앞)의 문을 그 칸의 벽에 그린다. 어느 칸으로 드나드는지 보인다 */
 function doorDecos(doors: Door[], x: number, y: number): Deco[] {
