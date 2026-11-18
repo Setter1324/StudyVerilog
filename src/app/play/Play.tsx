@@ -34,6 +34,7 @@ import { IsoSvg } from '../../world/IsoSvg';
 import { TopBar } from '../TopBar';
 import s from './Play.module.css';
 import { CodeEditor } from './CodeEditor';
+import { Help } from './Help';
 import { Question } from './Question';
 import { Waveform } from './Waveform';
 
@@ -157,6 +158,8 @@ export function Play({ id, devMs }: { id: string; devMs?: number }) {
   const data = stageData(id);
   const open = useProgress((p) => p.open);
   const pass = useProgress((p) => p.pass);
+  const peek = useProgress((p) => p.peek);
+  const peeked = useProgress((p) => p.peeked);
   const done = useProgress((p) => p.done);
   const drafts = useProgress((p) => p.drafts);
   const setDraft = useProgress((p) => p.setDraft);
@@ -422,6 +425,14 @@ export function Play({ id, devMs }: { id: string; devMs?: number }) {
     }
   }, [data, running, values, meta, pass, done, devMs]);
 
+  /** 도움 칸의 다음 단계를 연다. 정답까지 열면 정답을 본 스테이지로 적는다 */
+  const openHelp = () => {
+    if (!data || !meta) return;
+    const next = Math.min(hints + 1, data.hints.length + 1);
+    setHints(next);
+    if (next > data.hints.length) peek(meta.id);
+  };
+
   // Ctrl+Enter로 실행 (3장 원칙 8)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -518,6 +529,7 @@ export function Play({ id, devMs }: { id: string; devMs?: number }) {
             current={meta.id}
             done={stoneDone}
             zone={zone.id}
+            peeked={peeked}
             hop={ended && verdict?.pass}
             shake={ended && verdict && !verdict.pass ? runs : 0}
           />
@@ -533,7 +545,17 @@ export function Play({ id, devMs }: { id: string; devMs?: number }) {
               )}
             </svg>
           </IconButton>
-          <IconButton label="힌트" pressed={hints > 0} onClick={() => setHints((h) => (h >= data.hints.length ? 0 : h + 1))}>
+          <IconButton
+            label="힌트"
+            pressed={hints > 0}
+            onClick={() => {
+              // 도움 칸으로 가서 다음 힌트를 연다. 좁은 화면에서는 에디터가 월드 아래에 있다 (게이트 입구 계획 7장)
+              if (hints < data.hints.length) openHelp();
+              const help = document.getElementById('help');
+              help?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+              help?.querySelector<HTMLButtonElement>('button[aria-pressed="true"], button')?.focus({ preventScroll: true });
+            }}
+          >
             <svg viewBox="0 0 20 20" aria-hidden="true">
               <circle cx="10" cy="8" r="5" fill="none" stroke="currentColor" strokeWidth="1.6" />
               <path d="M8 15h4M8.5 17.5h3" stroke="currentColor" strokeWidth="1.6" />
@@ -638,13 +660,7 @@ export function Play({ id, devMs }: { id: string; devMs?: number }) {
             <p>{data.intro}</p>
             {data.draft && <p className={s.draft}>초안: {data.draft}</p>}
           </details>
-          {hints > 0 && (
-            <ol className={s.hints} aria-live="polite">
-              {data.hints.slice(0, hints).map((h, i) => (
-                <li key={i}>{h}</li>
-              ))}
-            </ol>
-          )}
+          <Help data={data} opened={hints} onOpen={openHelp} onFill={(v) => setDraft(id, { ...values, ...v })} />
           {fileNames.length > 1 && (
             <Tabs label="파일" idPrefix="file" items={fileNames.map((n) => ({ id: n, label: n }))} value={tab} onChange={setTab} />
           )}

@@ -372,15 +372,6 @@
   font-size: 12px !important;
 }
 
-.hints {
-  margin: 0;
-  padding: 10px 14px 10px 34px;
-  border-radius: 12px;
-  background: var(--accent-soft);
-  color: var(--text);
-  font-size: 14px;
-}
-
 .fileName {
   font-family: var(--font-mono);
   font-size: 13px;

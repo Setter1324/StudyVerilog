@@ -135,8 +135,8 @@ export function UiGallery() {
 
       <section className={s.section}>
         <h2 className={s.h2}>StageStones · SunTrack</h2>
-        <p className={s.muted}>징검다리: 통과 3개, 지금 1-4. 아래는 통과한 순간(▼가 다음 칸으로 뛴다)과 틀린 순간(지금 칸이 흔들린다).</p>
-        <StageStones stages={STONES} current="d4" done={STONES_DONE} zone={1} href={() => '#/ui'} />
+        <p className={s.muted}>징검다리: 통과 3개(1-2는 정답을 보고 통과해서 점), 지금 1-4. 아래는 통과한 순간(▼가 다음 칸으로 뛴다)과 틀린 순간(지금 칸이 흔들린다).</p>
+        <StageStones stages={STONES} current="d4" done={STONES_DONE} peeked={{ d2: true }} zone={1} href={() => '#/ui'} />
         <StageStones stages={STONES} current="d4" done={{ ...STONES_DONE, d4: true }} zone={1} hop href={() => '#/ui'} />
         <StageStones stages={STONES} current="d4" done={STONES_DONE} zone={1} shake={1} href={() => '#/ui'} />
         <p className={s.muted}>해의 길: 실행 전, 엔진 받는 중, 재생 중(40%), 해가 짐, 통과.</p>
